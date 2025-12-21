@@ -35,3 +35,8 @@ document.addEventListener('DOMContentLoaded', () => {
         form.addEventListener('submit', handleAuth);
     }
 });
+
+document.addEventListener('DOMContentLoaded', () => {
+    renderDashboard();
+    setupSearchFeature(); // Initializes the search listener
+});

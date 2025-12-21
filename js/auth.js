@@ -41,3 +41,36 @@ function logoutUser() {
         location.reload();
     }
 }
+
+
+/**
+ * Opens the custom confirmation modal
+ * @param {string} message - The question to ask the user
+ * @param {function} callback - The function to run if they click OK
+ */
+function showConfirm(message, callback) {
+    const modal = document.getElementById('confirmModal');
+    const questionText = document.getElementById('confirmQuestion');
+    const okBtn = document.getElementById('confirmOkBtn');
+
+    questionText.innerText = message;
+    modal.style.display = 'flex';
+
+    // Set up the click event for the OK button
+    okBtn.onclick = function() {
+        callback();
+        closeConfirmModal();
+    };
+}
+
+function closeConfirmModal() {
+    document.getElementById('confirmModal').style.display = 'none';
+}
+
+// Redesigned Logout Function
+function logoutUser() {
+    showConfirm("Are you sure you want to logout?", () => {
+        localStorage.removeItem('qprep_user');
+        location.reload();
+    });
+}

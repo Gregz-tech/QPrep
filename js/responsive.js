@@ -146,13 +146,13 @@ renderDashboard = function() {
 };
 
 // Enhance logout to handle mobile
-const originalLogoutUser = logoutUser;
-logoutUser = function() {
-    if (confirm("Are you sure you want to logout?")) {
-        originalLogoutUser();
-        closeMobileSidebar();
-    }
-};
+// const originalLogoutUser = logoutUser;
+// logoutUser = function() {
+//     if (confirm("Are you sure you want to logout?")) {
+//         originalLogoutUser();
+//         closeMobileSidebar();
+//     }
+// };
 
 // Enhance promote to update mobile UI
 const originalPromoteUserLevel = promoteUserLevel;

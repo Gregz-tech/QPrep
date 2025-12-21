@@ -1,5 +1,5 @@
 :root {
-    --accent: #3b82f6;
+    --accent: #0062ff;
     --glass-bg: rgba(255, 255, 255, 0.08);
     --glass-border: rgba(255, 255, 255, 0.15);
     --text-white: #ffffff;
@@ -1473,3 +1473,90 @@ body {
 .btn-icon { background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); color: white; padding: 8px; border-radius: 8px; cursor: pointer; transition: 0.3s; }
 .btn-icon.edit:hover { color: #10b981; border-color: #10b981; }
 .btn-icon.delete:hover { color: #ef4444; border-color: #ef4444; }
+
+.semester-select-container .stat-card {
+    transition: transform 0.3s ease, background 0.3s ease;
+}
+
+.semester-select-container .stat-card:hover {
+    transform: translateY(-10px);
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.icon-box.orange {
+    background: rgba(249, 115, 22, 0.2);
+    color: #fb923c;
+}
+
+
+/* DESKTOP VIEW: Hide the mobile-specific icon button */
+.mobile-user {
+    display: none;
+}
+
+/* MOBILE VIEW: Adjustments for 768px and below */
+@media (max-width: 768px) {
+    /* Hide the standard text logout button found in top-nav */
+    .logout-btn {
+        display: none !important;
+    }
+
+    /* Show the icon-based mobile logout button in the mobile-header */
+    .mobile-user {
+        display: flex;
+        align-items: center;
+    }
+}
+
+/* Additional styling for the confirm buttons */
+#confirmModal .auth-card {
+    max-width: 400px;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+#confirmOkBtn:hover {
+    background: #dc2626 !important;
+    box-shadow: 0 5px 15px rgba(180, 23, 23, 0.4);
+}
+
+@keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideOut {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(100%); opacity: 0; }
+}
+
+.notification-toast.error {
+    background: rgba(239, 68, 68, 0.2);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+
+@keyframes centerPop {
+    from { 
+        transform: translate(-50%, -40%); 
+        opacity: 0; 
+        scale: 0.9;
+    }
+    to { 
+        transform: translate(-50%, -50%); 
+        opacity: 1; 
+        scale: 1;
+    }
+}
+
+@keyframes centerFadeOut {
+    from { 
+        transform: translate(-50%, -50%); 
+        opacity: 1; 
+        scale: 1;
+    }
+    to { 
+        transform: translate(-50%, -60%); 
+        opacity: 0; 
+        scale: 0.9;
+    }
+}

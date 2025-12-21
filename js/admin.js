@@ -95,11 +95,41 @@ async function saveNewQuestion() {
     const semester = document.getElementById('adminSemester').value;
     const fileInput = document.getElementById('pqUpload');
 
-    // Validation
-    if (!code || !year || !title) {
-        alert("Missing Information: Please ensure Course Code, Title, and Year are filled.");
-        return;
-    }
+  // Validation
+if (!code || !year || !title) {
+    // Using a custom notification function instead of alert
+    showNotification("Missing Information: Course Code, Title, and Year are required.", "error"); //
+    return;
+}
+function showNotification(message, type = 'info') {
+    // Create notification element
+    const toast = document.createElement('div');
+    toast.className = `glass notification-toast ${type}`;
+    toast.style.cssText = `
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        padding: 15px 25px;
+        z-index: 11000;
+        border-left: 5px solid ${type === 'error' ? '#ef4444' : '#3b82f6'};
+        animation: slideIn 0.3s ease-out;
+    `;
+    
+    toast.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <i class="fas ${type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i>
+            <span>${message}</span>
+        </div>
+    `;
+
+    document.body.appendChild(toast);
+
+    // Auto-remove after 3 seconds
+    setTimeout(() => {
+        toast.style.animation = 'slideOut 0.3s ease-in forwards';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
 
     // Initialize the nested structure
     if (!questionBank[dept]) questionBank[dept] = {};
@@ -117,11 +147,17 @@ async function saveNewQuestion() {
         imagePaths: [] 
     };
 
+  // Show a loading state on the button
+    const saveBtn = document.querySelector('.btn-primary');
+    const originalText = saveBtn.innerText;
+    saveBtn.innerText = "Processing...";
+    saveBtn.disabled = true;
+
     try {
         // Handle Images
         if (fileInput && fileInput.files.length > 0) {
             paperEntry.isImagePaper = true;
-            
+          
             const uploadPromises = Array.from(fileInput.files).map(file => {
                 return new Promise((resolve, reject) => {
                     const reader = new FileReader();
@@ -133,28 +169,43 @@ async function saveNewQuestion() {
 
             paperEntry.imagePaths = await Promise.all(uploadPromises);
         } else {
-            // Only save text sections if no images are provided
             paperEntry.sections = activeSections;
         }
 
         // Assign to questionBank
         questionBank[dept][level][code].data[year][semester] = paperEntry;
 
-        // Try to save to localStorage
+        // Save to localStorage
         localStorage.setItem('qprep_bank', JSON.stringify(questionBank));
         
-        alert(`Success! Paper for ${code} (${year}) saved successfully.`);
-        location.reload();
+        // Success Notification
+        showNotification(`Success! ${code} (${year}) has been integrated.`, "success");
+        
+        // Brief delay so the user sees the success toast before reload
+        setTimeout(() => location.reload(), 1500);
 
     } catch (error) {
         console.error("Save Error:", error);
+        
+        // Error Notifications
         if (error.name === 'QuotaExceededError' || error.code === 22) {
-            alert("STORAGE FULL: The images are too high-resolution. Try selecting fewer pages or smaller files.");
+            showNotification("Storage Full: Try lower-resolution images or fewer pages.", "error");
         } else {
-            alert("An error occurred while saving. Check console for details.");
+            showNotification("An unexpected error occurred while saving.", "error");
         }
+
+        // Reset button state on error
+        saveBtn.innerText = originalText;
+        saveBtn.disabled = false;
     }
+
 }
+
+if (!questionBank[dept][level][code]) {
+    questionBank[dept][level][code] = { name: title, data: {} };
+}
+// Save the specific session/semester info
+questionBank[dept][level][code].data[year][semester] = paperEntry;
 
 function clearStorage() {
     const confirmed = confirm("WARNING: This will permanently delete ALL uploaded past questions. Are you sure you want to reset the question bank?");
