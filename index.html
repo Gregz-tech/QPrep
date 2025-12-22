@@ -35,7 +35,7 @@
             <h2 id="confirmQuestion" style="margin-top: 15px;">Are you sure?</h2>
         </div>
         <div style="display: flex; gap: 15px; margin-top: 25px;">
-            <button id="confirmOkBtn" class="btn-primary" style="background: #d71111; margin-top: 0;">Logout</button>
+            <button id="confirmOkBtn" class="btn-primary" style="background: #d71111; margin-top: 0;">Ok</button>
             <button onclick="closeConfirmModal()" class="btn-secondary" style="flex: 1;">Cancel</button>
         </div>
     </div>
@@ -67,6 +67,22 @@
                 <i class="fas fa-th-large"></i>
                 <span>Dashboard</span>
             </a>
+
+               <div class="nav-label">Archive</div>
+                        <div class="archive-dropdown glass-input" style="margin: 0 15px; border-radius: 12px; overflow: hidden;">
+                            <div class="archive-header" onclick="toggleArchiveMenu()" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; cursor: pointer;">
+                                <span><i class="fas fa-archive"></i> My Archive</span>
+                                <i class="fas fa-chevron-down" id="archiveIcon"></i>
+                            </div>
+                            <div id="archiveLevels" style="display: none; background: rgba(0,0,0,0.2); border-top: 1px solid var(--glass-border);">
+                                <a href="#" class="nav-item" onclick="viewArchiveLevel('100')">100 Level</a>
+                                <a href="#" class="nav-item" onclick="viewArchiveLevel('200')">200 Level</a>
+                                <a href="#" class="nav-item" onclick="viewArchiveLevel('300')">300 Level</a>
+                                <a href="#" class="nav-item" onclick="viewArchiveLevel('400')">400 Level</a>
+                                <a href="#" class="nav-item" onclick="viewArchiveLevel('500')">500 Level</a>
+                            </div>
+                        </div>
+                        
             <div id="mobileAdminOnlyNav" style="display: none;">
                 <div class="mobile-nav-label">Management</div>
                 <a href="javascript:void(0)" class="mobile-nav-item" onclick="openAdminPanel(); closeMobileSidebar()">
@@ -107,7 +123,18 @@
                             <select id="regDept">
                                 <option value="ITH">ITH</option>
                                 <option value="AUD">AUD</option>
+                                <option value="BCH">BCH</option>
+                                <option value="BMB">BMB</option>
+                                <option value="EHS">EHS</option>
                                 <option value="MBBS">MBBS</option>
+                                <option value="MCB">MCB</option>
+                                <option value="MCB">MLS</option>
+                                <option value="NUR">NUR</option>
+                                <option value="NUT">NUT</option>
+                                <option value="PHM">PHM</option>
+                                <option value="PRT">PRT</option>
+                                <option value="PST">PST</option>
+                                
                             </select>
                         </div>
                         <div class="input-group">
@@ -116,7 +143,9 @@
                                 <option value="100">100L</option>
                                 <option value="200">200L</option>
                                 <option value="300">300L</option>
-                            </select>
+                                <option value="100">400L</option>
+                                <option value="200">500L</option>
+                             </select>
                         </div>
                     </div>
                 </div>
@@ -141,6 +170,21 @@
             <div class="logo"><i class="fas fa-graduation-cap"></i> <span>QPrep</span></div>
             <nav class="nav-menu">
                 <a href="#" class="nav-item active"><i class="fas fa-th-large"></i> Dashboard</a>
+                
+                <div class="nav-label">Archive</div>
+                        <div class="archive-dropdown glass-input" style="margin: 0 15px; border-radius: 12px; overflow: hidden;">
+                            <div class="archive-header" onclick="toggleArchiveMenu()" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; cursor: pointer;">
+                                <span><i class="fas fa-archive"></i> My Archive</span>
+                                <i class="fas fa-chevron-down" id="archiveIcon"></i>
+                            </div>
+                            <div id="archiveLevels" style="display: none; background: rgba(0,0,0,0.2); border-top: 1px solid var(--glass-border);">
+                                <a href="#" class="nav-item" onclick="viewArchiveLevel('100')">100 Level</a>
+                                <a href="#" class="nav-item" onclick="viewArchiveLevel('200')">200 Level</a>
+                                <a href="#" class="nav-item" onclick="viewArchiveLevel('300')">300 Level</a>
+                                <a href="#" class="nav-item" onclick="viewArchiveLevel('400')">400 Level</a>
+                                <a href="#" class="nav-item" onclick="viewArchiveLevel('500')">500 Level</a>
+                            </div>
+                        </div>
                 <div id="adminOnlyNav" style="display: none;">
                     <div class="nav-label">Management</div>
                     <a href="javascript:void(0)" onclick="openAdminPanel()" class="nav-item">
@@ -150,8 +194,8 @@
             </nav>
             <div class="sidebar-footer" id="sidebarFooter">
                 <div class="level-manager glass">
-                    <p id="promoteText">Next: <span id="nextLevelLabel">200L</span></p>
-                    <button onclick="promoteUserLevel()" class="btn-promote">Promote Me</button>
+                    <!-- <p id="promoteText">Next: <span id="nextLevelLabel">200L</span></p>
+                    <button onclick="promoteUserLevel()" class="btn-promote">Promote Me</button> -->
                 </div>
             </div>
         </aside>
