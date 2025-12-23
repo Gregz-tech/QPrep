@@ -320,19 +320,78 @@ function renderLevelHierarchy(dept) {
 function renderAdminCourseItems(dept, level, semester) {
     const courses = questionBank[dept][level];
     let html = "";
+    
+    // Header for the list (Desktop only)
+    html += `
+        <div class="admin-list-header glass" style="display: flex; justify-content: space-between; padding: 10px 20px; margin-bottom: 10px; font-weight: bold; font-size: 0.8rem; opacity: 0.7;">
+            <span>COURSE CODE & YEAR</span>
+            <span>ACTIONS</span>
+        </div>
+    `;
+
     for (const code in courses) {
         for (const year in courses[code].data) {
             if (courses[code].data[year][semester]) {
                 html += `
-                <div class="glass" style="display: flex; justify-content: space-between; padding: 10px; margin-bottom: 5px;">
-                    <span>${code} (${year})</span>
-                    <button onclick="deletePaper('${dept}','${level}','${code}','${year}','${semester}')" style="color:#ef4444; background:none; border:none; cursor:pointer;"><i class="fas fa-trash"></i></button>
+                <div class="admin-management-card glass" style="display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; margin-bottom: 10px;">
+                    <div>
+                        <span style="font-weight: 600;">${code}</span>
+                        <span style="margin-left: 10px; opacity: 0.6;">${year}</span>
+                    </div>
+                    <div style="; display: flex; gap: 15px;">
+                        <button onclick="editPaper('${dept}','${level}','${code}','${year}','${semester}')" class="btn-icon edit" title="Edit Paper">
+                            <i class="fas fa-edit"></i>                        </button>
+                        <button onclick="deletePaper('${dept}','${level}','${code}','${year}','${semester}')" class="btn-icon delete" title="Delete Paper">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
                 </div>`;
             }
         }
     }
-    return html || `<p style="font-size:0.7rem; opacity:0.5;">Empty</p>`;
+    return html;
 }
+
+/**
+ * Deletes a paper from the database with confirmation
+ */
+function deletePaper(dept, level, code, year, sem) {
+    // Check if showConfirm exists (from your auth/utils), otherwise use standard confirm
+    const confirmMsg = `Are you sure you want to delete ${code} (${year}) for ${sem} semester?`;
+    
+    if (window.showConfirm) {
+        window.showConfirm(confirmMsg, () => executeDeletion(dept, level, code, year, sem));
+    } else if (confirm(confirmMsg)) {
+        executeDeletion(dept, level, code, year, sem);
+    }
+}
+
+function executeDeletion(dept, level, code, year, sem) {
+    try {
+        // Navigate the nested object to delete the specific year/semester
+        if (questionBank[dept]?.[level]?.[code]?.data?.[year]) {
+            delete questionBank[dept][level][code].data[year][sem];
+
+            // Cleanup: If year is now empty, delete the year
+            if (Object.keys(questionBank[dept][level][code].data[year]).length === 0) {
+                delete questionBank[dept][level][code].data[year];
+            }
+            
+            // Save updated bank to localStorage
+            localStorage.setItem('qprep_bank', JSON.stringify(questionBank));
+            
+            showNotification(`${code} paper deleted successfully`, "success");
+            renderDashboard(); // Refresh the list
+        }
+    } catch (error) {
+        showNotification("Error deleting paper", "error");
+        console.error(error);
+    }
+}
+
+// Make it globally accessible
+window.deletePaper = deletePaper;
+
 
 // ==========================================
 // 6. INITIALIZATION & UTILS
@@ -360,3 +419,8 @@ window.closeViewer = () => {
     document.getElementById('paperViewer').style.display = 'none';
     document.body.style.overflow = 'auto';
 };
+
+function editPaper(dept, level, code, year, semester) {
+    showNotification("Edit feature coming soon! Currently, please delete and re-upload.", "info");
+}
+window.editPaper = editPaper;

@@ -1560,3 +1560,48 @@ body {
         scale: 0.9;
     }
 }
+
+
+/* Apply only to Desktop (Screens wider than 1024px) */
+@media (min-width: 1024px) {
+    #adminPanel .viewer-content {
+        max-width: 95%;
+        width: 1400px;
+        margin: 20px auto;
+    }
+
+    /* Create the Side-by-Side Split */
+    .question-builder-container {
+        display: grid;
+        grid-template-columns: 400px 1fr; /* Form on left, Preview/Workspace on right */
+        gap: 30px;
+        align-items: start;
+    }
+
+    /* Ensure form sections take full width of their 400px column */
+    .builder-section {
+        margin-bottom: 20px;
+        width: 100%;
+    }
+
+    /* Fixed position for the Save Bar to make it look like a professional toolbar */
+    .admin-workspace-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: rgba(255, 255, 255, 0.05);
+        padding: 20px;
+        border-radius: 15px;
+        margin-bottom: 20px;
+        border: 1px solid var(--glass-border);
+    }
+}
+
+/* Improve the look of Input groups in the builder */
+.builder-section .input-group {
+    background: rgba(255, 255, 255, 0.02);
+    padding: 15px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
