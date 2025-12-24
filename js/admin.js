@@ -1,20 +1,37 @@
-// js/admin.js
+// CONFIGURATION
+const API_URL = 'http://localhost:5000/api/papers'; 
+
 let activeSections = [];
 
+// ==========================================
+// 1. UI & PANEL MANAGEMENT
+// ==========================================
+
 function openAdminPanel() {
-    document.getElementById('adminPanel').style.display = 'block';
-    activeSections = [];
-    addNewSection();
+    const panel = document.getElementById('adminPanel');
+    if (panel) {
+        panel.style.display = 'block';
+        if (activeSections.length === 0) addNewSection();
+    }
 }
 
 function closeAdminPanel() { 
-    document.getElementById('adminPanel').style.display = 'none'; 
+    const panel = document.getElementById('adminPanel');
+    if (panel) panel.style.display = 'none'; 
+    
+    // Clear form
+    activeSections = [];
+    document.getElementById('adminCourseCode').value = "";
+    document.getElementById('adminCourseTitle').value = "";
+    document.getElementById('adminYear').value = "";
+    document.getElementById('adminInstructions').value = "";
+    document.getElementById('pqUpload').value = ""; 
 }
 
 function addNewSection() {
     const section = {
         id: Date.now(),
-        title: "SECTION " + String.fromCharCode(65 + activeSections.length),
+        title: "SECTION " + String.fromCharCode(65 + activeSections.length), 
         questions: []
     };
     activeSections.push(section);
@@ -37,27 +54,39 @@ function addQuestionToSection(sectionId) {
 function renderAdminWorkspace() {
     const container = document.getElementById('objFieldsContainer');
     if (!container) return;
+    
     container.innerHTML = activeSections.map(sec => `
-        <div class="admin-section-block glass" style="margin-bottom: 20px; padding: 20px;">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
-                <input type="text" value="${sec.title}" onchange="updateSecTitle(${sec.id}, this.value)" class="glass-input" style="width: 70%;">
-                <button onclick="removeSection(${sec.id})" class="logout-btn" style="padding: 5px 10px;">Delete Section</button>
+        <div class="admin-section-block glass" style="margin-bottom: 20px; padding: 25px; border: 1px solid var(--glass-border); border-radius: 15px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <input type="text" value="${sec.title}" onchange="updateSecTitle(${sec.id}, this.value)" 
+                    class="glass-input" style="width: 70%; font-weight:bold; font-size: 1.1rem; color: var(--accent);">
+                <button onclick="removeSection(${sec.id})" class="logout-btn" style="padding: 8px 15px; font-size:0.8rem; border-radius: 8px;">
+                    <i class="fas fa-trash-alt"></i> Remove Section
+                </button>
             </div>
-            <button onclick="addQuestionToSection(${sec.id})" class="btn-secondary" style="margin-bottom: 15px;">+ Add Question</button>
-            <div id="questions-for-${sec.id}">
+            
+            <div id="questions-for-${sec.id}" style="display: flex; flex-direction: column; gap: 15px;">
                 ${sec.questions.map((q, qi) => `
-                    <div style="position: relative; margin-bottom: 10px;">
-                        <textarea placeholder="Question ${qi + 1}" onchange="updateQText(${sec.id}, ${qi}, this.value)" class="glass-input" style="width: 100%; min-height: 60px;">${q.text}</textarea>
+                    <div style="position: relative;">
+                        <textarea placeholder="Type Question ${qi + 1} here..." onchange="updateQText(${sec.id}, ${qi}, this.value)" 
+                            class="glass-input" style="width: 100%; min-height: 80px; padding: 15px; line-height: 1.5;">${q.text}</textarea>
                     </div>
                 `).join('')}
             </div>
+            <button onclick="addQuestionToSection(${sec.id})" class="btn-secondary" style="width:100%; margin-top:20px; padding: 12px; border-style: dashed;">
+                <i class="fas fa-plus-circle"></i> Add Another Question
+            </button>
         </div>`).join('');
 }
 
-function updateSecTitle(id, val) { activeSections.find(s => s.id === id).title = val; }
-function updateQText(sid, qi, val) { activeSections.find(s => s.id === sid).questions[qi].text = val; }
+window.updateSecTitle = (id, val) => { activeSections.find(s => s.id === id).title = val; };
+window.updateQText = (sid, qi, val) => { activeSections.find(s => s.id === sid).questions[qi].text = val; };
 
-// MAIN SAVE LOGIC
+
+// ==========================================
+// 2. MAIN SAVE LOGIC (Frontend -> Node.js)
+// ==========================================
+
 async function saveNewQuestion() {
     const code = document.getElementById('adminCourseCode').value.toUpperCase().trim();
     const title = document.getElementById('adminCourseTitle').value.trim();
@@ -66,86 +95,90 @@ async function saveNewQuestion() {
     const year = document.getElementById('adminYear').value.trim();
     const semester = document.getElementById('adminSemester').value;
     const fileInput = document.getElementById('pqUpload');
+    const instructions = document.getElementById('adminInstructions').value.trim();
 
     if (!code || !year || !title) {
-        showNotification("Course Code, Title, and Year are required.", "error");
+        showNotification("Please fill in Course Code, Title, and Year.", "error");
         return;
     }
 
     const saveBtn = document.querySelector('.btn-primary');
     const originalText = saveBtn.innerText;
-    saveBtn.innerText = "Processing...";
+    saveBtn.innerHTML = `Uploading...`;
     saveBtn.disabled = true;
 
-    // Build the Paper Object
-    const paperEntry = {
-        instructions: document.getElementById('adminInstructions').value.trim(),
-        isImagePaper: false,
-        isDocument: false,
-        imagePaths: [],
-        documents: [],
-        sections: activeSections
-    };
-
     try {
+        // Process Files
+        let processedImages = [];
+        let processedDocs = [];
+
         if (fileInput && fileInput.files.length > 0) {
             const uploadPromises = Array.from(fileInput.files).map(file => {
-                return new Promise((resolve) => {
+                return new Promise((resolve, reject) => {
                     const reader = new FileReader();
                     reader.onload = (e) => resolve({ name: file.name, type: file.type, data: e.target.result });
-                    reader.readAsDataURL(file); //
+                    reader.onerror = (error) => reject(error);
+                    reader.readAsDataURL(file);
                 });
             });
 
             const results = await Promise.all(uploadPromises);
+            
             results.forEach(f => {
-                if (f.type.includes('image')) {
-                    paperEntry.isImagePaper = true;
-                    paperEntry.imagePaths.push(f.data);
+                if (f.type.startsWith('image/')) {
+                    processedImages.push(f.data);
                 } else {
-                    paperEntry.isDocument = true;
-                    paperEntry.documents.push(f);
+                    processedDocs.push(f);
                 }
             });
         }
 
-        // Deep structure initialization
-        if (!questionBank[dept]) questionBank[dept] = {};
-        if (!questionBank[dept][level]) questionBank[dept][level] = {};
-        if (!questionBank[dept][level][code]) questionBank[dept][level][code] = { name: title, data: {} };
-        if (!questionBank[dept][level][code].data[year]) questionBank[dept][level][code].data[year] = {};
+        const paperPayload = {
+            courseCode: code,
+            courseTitle: title,
+            department: dept,
+            level: level,
+            year: year,
+            semester: semester,
+            instructions: instructions,
+            sections: activeSections,
+            imagePaths: processedImages,
+            documents: processedDocs
+        };
 
-        questionBank[dept][level][code].data[year][semester] = paperEntry;
-        
-        localStorage.setItem('qprep_bank', JSON.stringify(questionBank)); //
-        showNotification(`Success! ${code} integrated.`, "success");
-        setTimeout(() => location.reload(), 1500);
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(paperPayload)
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            showNotification(`Success! ${code} saved to database.`, "success");
+            closeAdminPanel();
+            setTimeout(() => location.reload(), 1500); 
+        } else {
+            throw new Error(result.error || result.message || "Server rejected the data");
+        }
 
     } catch (error) {
-        showNotification("Storage Full or Save Error.", "error"); //
+        console.error("Save Error:", error);
+        showNotification("Upload Failed: " + error.message, "error");
         saveBtn.innerText = originalText;
         saveBtn.disabled = false;
     }
 }
 
-// ==========================================
-// EDIT FUNCTIONALITY
-// ==========================================
-
 function editPaper(dept, level, code, year, sem) {
-    // 1. Retrieve the specific paper object
-    const course = questionBank[dept][level][code];
-    const paper = course.data[year][sem];
+    const course = questionBank[dept]?.[level]?.[code];
+    if (!course) return showNotification("Paper not found locally. Try refreshing.", "error");
 
-    if (!paper) {
-        showNotification("Error: Paper data not found.", "error");
-        return;
-    }
+    const paper = course.data[year]?.[sem];
+    if (!paper) return showNotification("Specific year data not found.", "error");
 
-    // 2. Open the Admin Panel
     openAdminPanel();
-
-    // 3. Pre-fill Metadata Fields
+    
     document.getElementById('adminCourseCode').value = code;
     document.getElementById('adminCourseTitle').value = course.name;
     document.getElementById('adminDept').value = dept;
@@ -154,26 +187,20 @@ function editPaper(dept, level, code, year, sem) {
     document.getElementById('adminSemester').value = sem;
     document.getElementById('adminInstructions').value = paper.instructions || "";
 
-    // 4. Handle Text Sections (If it's a typed paper)
     if (paper.sections && paper.sections.length > 0) {
-        // Load the existing questions into the global activeSections array
-        activeSections = paper.sections; 
-        renderAdminWorkspace(); // Re-render the form with these questions
+        activeSections = paper.sections;
+        renderAdminWorkspace();
     } else {
-        // Reset sections if it's purely an image paper
         activeSections = [];
-        addNewSection(); // Start with one empty section
+        addNewSection();
     }
-
-    // 5. Handle Images/Docs (User Feedback)
-    // Note: We cannot pre-fill the <input type="file"> due to browser security.
-    if (paper.isImagePaper || paper.isDocument) {
-        const fileCount = (paper.imagePaths?.length || 0) + (paper.documents?.length || 0);
-        showNotification(`Editing: This paper has ${fileCount} existing file(s). Uploading new files will REPLACE them.`, "info");
-    } else {
-        showNotification("Editing Mode Enabled.", "success");
-    }
+    showNotification(`Editing ${code} (${year}).`, "info");
 }
 
-// Make it globally accessible for the onclick event in HTML
+window.openAdminPanel = openAdminPanel;
+window.closeAdminPanel = closeAdminPanel;
+window.addNewSection = addNewSection;
+window.removeSection = removeSection;
+window.addQuestionToSection = addQuestionToSection;
+window.saveNewQuestion = saveNewQuestion;
 window.editPaper = editPaper;
