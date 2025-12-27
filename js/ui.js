@@ -1,4 +1,5 @@
-const API_BASE_URL = 'http://localhost:5000/api/papers';
+// const API_BASE_URL = 'http://localhost:5000/api/papers';
+const BASE_URL = 'https://qprep-backend-1.onrender.com/api/papers';
 window.questionBank = {}; 
 
 // ==========================================

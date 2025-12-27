@@ -1,5 +1,7 @@
 // CONFIGURATION
-const API_URL = 'http://localhost:5000/api/auth'; 
+// const API_URL = 'http://localhost:5000/api/auth'; 
+
+const API_URL = 'https://qprep-backend-1.onrender.com/api/auth';
 
 const mainCard = document.getElementById('mainCard');
 const triggerSignUp = document.getElementById('triggerSignUp');
