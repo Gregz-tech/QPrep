@@ -2,9 +2,31 @@ const API_BASE_URL = 'http://localhost:5000/api/papers';
 window.questionBank = {}; 
 
 // ==========================================
-// 1. DATA LOADING
+// 1. DATA LOADING & STATE RESTORATION
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
+    // A. RESTORE USER (Crucial Step)
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+        window.user = JSON.parse(storedUser);
+        console.log("User restored from storage:", window.user);
+    } else {
+        // B. FALLBACK FOR TESTING (If no user is logged in)
+        console.warn("No user found. Creating dummy test user.");
+        window.user = { 
+            name: "Test Student", 
+            dept: "ITH", 
+            level: "300", 
+            role: "student" 
+        };
+    }
+
+    // C. Update Sidebar Info (Visual Feedback)
+    const profileName = document.querySelector('.profile-info h4');
+    const profileRole = document.querySelector('.profile-info p');
+    if (profileName) profileName.innerText = window.user.name;
+    if (profileRole) profileRole.innerText = `${window.user.dept} ${window.user.level}L`;
+
     loadPapersFromBackend(); 
     setupSearchFeature();
 });
@@ -12,85 +34,85 @@ document.addEventListener('DOMContentLoaded', () => {
 async function loadPapersFromBackend() {
     try {
         const response = await fetch(API_BASE_URL);
-        if (!response.ok) throw new Error("Failed to connect to server");
+        if (!response.ok) throw new Error("Server Error");
         
         const papers = await response.json();
-        window.questionBank = {}; // Reset
+        window.questionBank = {}; 
 
-        // Transform Flat Array -> Nested Object
+        // Transform Data
         papers.forEach(p => {
             if (!questionBank[p.department]) questionBank[p.department] = {};
             if (!questionBank[p.department][p.level]) questionBank[p.department][p.level] = {};
-            
-            // Course
             if (!questionBank[p.department][p.level][p.courseCode]) {
-                questionBank[p.department][p.level][p.courseCode] = {
-                    name: p.courseTitle,
-                    data: {}
-                };
+                questionBank[p.department][p.level][p.courseCode] = { name: p.courseTitle, data: {} };
             }
-            // Year
             if (!questionBank[p.department][p.level][p.courseCode].data[p.year]) {
                 questionBank[p.department][p.level][p.courseCode].data[p.year] = {};
             }
-            // Paper (Save _id for delete)
-            questionBank[p.department][p.level][p.courseCode].data[p.year][p.semester] = {
-                ...p,
-                _id: p._id 
-            };
+            questionBank[p.department][p.level][p.courseCode].data[p.year][p.semester] = { ...p, _id: p._id };
         });
 
-        console.log("Data loaded:", questionBank);
-        renderDashboard(); 
+        console.log("Data & Bank Ready. Rendering Dashboard...");
+        renderDashboard(); // <--- Trigger UI Update
 
     } catch (error) {
         console.error("Backend Error:", error);
-        renderDashboard();
+        // Even if backend fails, render the empty dashboard so buttons appear
+        renderDashboard(); 
     }
 }
 
 // ==========================================
-// 2. DASHBOARD ROUTER
+// 2. DASHBOARD ROUTER (The Fix)
 // ==========================================
 function renderDashboard() {
-    if (!window.user) return; 
+    // 1. SAFETY CHECK
+    if (!window.user) {
+        console.warn("No user logged in.");
+        return;
+    }
 
-    const isAdmin = window.user.role === 'admin';
+    console.log("Current User Role:", window.user.role); // Watch the console to see what the app thinks you are
+
     const grid = document.getElementById('questionsGrid');
-    if (!grid) return;
+    const heading = document.getElementById('courseHeading');
+    
+    if (!grid || !heading) return;
+
     grid.style.display = 'block';
 
-    const adminNav = document.getElementById('adminOnlyNav');
-    const mobileAdminNav = document.getElementById('mobileAdminOnlyNav');
-    const sidebarFooter = document.getElementById('sidebarFooter');
+    // 2. CHECK ROLE
+    // This now strictly trusts the data from Login/LocalStorage
+    const isAdmin = window.user.role === 'admin';
 
-    if (adminNav) adminNav.style.display = isAdmin ? 'block' : 'none';
-    if (mobileAdminNav) mobileAdminNav.style.display = isAdmin ? 'block' : 'none';
-    if (sidebarFooter) sidebarFooter.style.display = isAdmin ? 'none' : 'block';
-
+    // 3. ROUTER
     if (isAdmin) {
-        const heading = document.getElementById('courseHeading');
-        if(heading) heading.innerText = "Management Console";
-        renderAdminManagementHierarchy(grid);
+        // Show Admin features
+        heading.innerText = "Management Console";
+        renderAdminManagementHierarchy(grid); 
     } else {
+        // Show Student features
         renderStudentSemesterView(grid);
     }
 }
-
 // ==========================================
-// 3. STUDENT VIEW
+// 3. STUDENT SEMESTER BUTTONS
 // ==========================================
 function renderStudentSemesterView(container) {
-    document.getElementById('courseHeading').innerText = `Select Semester - ${user.level}L`;
+    console.log("Rendering Semester Buttons..."); // Debug log
+    document.getElementById('courseHeading').innerText = `Select Semester - ${user.dept} ${user.level}L`;
+    
     container.innerHTML = `
         <div class="semester-select-container" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width: 100%;">
-            <div class="stat-card glass" onclick="renderCourseGridBySemester('First')" style="cursor: pointer; flex-direction: column; text-align: center; padding: 40px;">
-                <div class="icon-box blue" style="margin-bottom: 15px;"><i class="fas fa-snowflake"></i></div>
+            <div class="stat-card glass" onclick="renderCourseGridBySemester('First')" style="cursor: pointer; flex-direction: column; text-align: center; padding: 40px; border: 1px solid var(--glass-border);">
+                <div class="icon-box blue" style="margin: 0 auto 15px auto;"><i class="fas fa-snowflake"></i></div>
                 <h3>FIRST SEMESTER</h3>
+                <p>Tap to view courses</p>
             </div>
-            <div class="stat-card glass" onclick="renderCourseGridBySemester('Second')" style="cursor: pointer; flex-direction: column; text-align: center; padding: 40px;">
-                <div class="icon-box orange" style="margin-bottom: 15px;"><i class="fas fa-sun"></i></div>
+            <div class="stat-card glass" onclick="renderCourseGridBySemester('Second')" style="cursor: pointer; flex-direction: column; text-align: center; padding: 40px; border: 1px solid var(--glass-border);">
+                <div class="icon-box orange" style="margin: 0 auto 15px auto;"><i class="fas fa-sun"></i></div>
                 <h3>SECOND SEMESTER</h3>
+                <p>Tap to view courses</p>
             </div>
         </div>
     `;
@@ -132,7 +154,69 @@ function displayCourses(semester, level, isArchive = false) {
 }
 
 function renderCourseGridBySemester(semester) {
-    displayCourses(semester, user.level, false);
+    console.log(`--- DEBUGGING RENDER ---`);
+    console.log(`User Context: Dept=${user.dept}, Level=${user.level}`);
+    console.log(`Requested Semester: ${semester}`);
+
+    document.getElementById('courseHeading').innerHTML = `
+        <button onclick="renderDashboard()" class="btn-icon" style="margin-right:10px; background:none; border:none; color:white; cursor:pointer;">
+            <i class="fas fa-arrow-left"></i>
+        </button>
+        ${semester.toUpperCase()} SEMESTER
+    `;
+    
+    const container = document.getElementById('questionsGrid');
+    
+    // 1. Check if Dept/Level exists
+    const deptData = questionBank[user.dept];
+    if (!deptData) {
+        console.error(`Debug: No data found for Dept '${user.dept}'`);
+        container.innerHTML = `<div class="empty-state glass"><p>No data found for ${user.dept}.</p></div>`;
+        return;
+    }
+
+    const levelData = deptData[user.level];
+    if (!levelData) {
+        console.error(`Debug: No data found for Level '${user.level}' in ${user.dept}`);
+        console.log(`Available Levels:`, Object.keys(deptData));
+        container.innerHTML = `<div class="empty-state glass"><p>No data found for ${user.level} Level. (Available: ${Object.keys(deptData).join(', ')})</p></div>`;
+        return;
+    }
+
+    // 2. Filter Codes with Case-Insensitive Check
+    const filteredCodes = Object.keys(levelData).filter(code => {
+        const course = levelData[code];
+        const years = course.data || {};
+        
+        // Check ALL years to see if ANY match the requested semester
+        const hasData = Object.values(years).some(yearData => {
+            // Check exact match OR case-insensitive match
+            const exact = yearData[semester];
+            const lower = yearData[semester.toLowerCase()];
+            const upper = yearData[semester.toUpperCase()];
+            
+            return exact || lower || upper;
+        });
+
+        if (!hasData) console.log(`Debug: Skipping ${code} (No data for ${semester})`);
+        return hasData;
+    });
+
+    if (filteredCodes.length === 0) {
+        container.innerHTML = `<div class="empty-state glass" style="padding:40px; text-align:center;"><p>No courses found for ${semester} semester.</p></div>`;
+        return;
+    }
+
+    // 3. Render
+    container.innerHTML = filteredCodes.map(code => `
+        <div class="stat-card glass" onclick="openYearPicker('${code}', '${semester}')" style="cursor:pointer;">
+            <div class="icon-box blue"><i class="fas fa-book"></i></div>
+            <div>
+                <h3>${code}</h3>
+                <p>${levelData[code].name}</p>
+            </div>
+        </div>
+    `).join('');
 }
 
 // ==========================================
@@ -188,11 +272,52 @@ function renderArchiveCourses(semester, archiveLevel) {
 // 5. ADMIN MANAGEMENT & DELETE
 // ==========================================
 function renderAdminManagementHierarchy(container) {
-    let html = "";
+    // 1. THE NEW ACTION BUTTON (Visible Only to Admins)
+    let html = `
+        <div class="admin-quick-actions" style="margin-bottom: 30px;">
+            <button onclick="openAdminPanel()" class="glass" style="
+                width: 100%; 
+                padding: 20px; 
+                display: flex; 
+                align-items: center; 
+                justify-content: center; 
+                gap: 15px; 
+                border: 2px dashed rgba(59, 130, 246, 0.5); 
+                cursor: pointer; 
+                transition: all 0.3s ease;
+                background: rgba(59, 130, 246, 0.1);">
+                
+                <div style="
+                    background: #3b82f6; 
+                    width: 40px; 
+                    height: 40px; 
+                    border-radius: 50%; 
+                    display: flex; 
+                    align-items: center; 
+                    justify-content: center; 
+                    color: white; 
+                    font-size: 1.2rem;">
+                    <i class="fas fa-plus"></i>
+                </div>
+                <div style="text-align: left;">
+                    <h3 style="margin: 0; color: #3b82f6;">Upload New Question Paper</h3>
+                    <p style="margin: 0; opacity: 0.7; font-size: 0.9rem;">Add a new course, year, or semester</p>
+                </div>
+            </button>
+        </div>
+    `;
+
+    // 2. CHECK FOR DATA
     if (Object.keys(questionBank).length === 0) {
-        container.innerHTML = `<div class="empty-state glass"><p>No data loaded from cloud.</p></div>`;
+        // If empty, show the button + empty message
+        html += `<div class="empty-state glass"><p>No data loaded from cloud.</p></div>`;
+        container.innerHTML = html;
         return;
     }
+
+    // 3. RENDER THE EXISTING HIERARCHY
+    html += `<h3 style="margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">Existing Papers</h3>`;
+    
     for (const dept in questionBank) {
         const safeId = dept.replace(/\s+/g, '-');
         html += `
@@ -204,6 +329,7 @@ function renderAdminManagementHierarchy(container) {
             <div id="dept-${safeId}" style="display:none; padding: 10px;">${renderLevelHierarchy(dept)}</div>
         </div>`;
     }
+    
     container.innerHTML = html;
 }
 
@@ -358,4 +484,109 @@ function setupSearchFeature() {
             card.style.display = card.innerText.toLowerCase().includes(term) ? "flex" : "none";
         });
     });
+}
+
+
+// ==========================================
+// 4. LOGOUT & UTILITIES (Moved from old auth.js)
+// ==========================================
+
+function logoutUser() {
+    // Check if the custom modal exists, otherwise use standard confirm
+    const confirmModal = document.getElementById('confirmModal');
+    
+    if (confirmModal) {
+        showConfirm("Are you sure you want to logout?", performLogout);
+    } else {
+        if(confirm("Are you sure you want to logout?")) {
+            performLogout();
+        }
+    }
+}
+
+function performLogout() {
+    // 1. Clear the saved user data
+    localStorage.removeItem('user'); 
+    // 2. Redirect to the new Login Page
+    window.location.href = 'login.html';
+}
+
+// --- CUSTOM CONFIRM MODAL LOGIC ---
+function showConfirm(message, callback) {
+    const modal = document.getElementById('confirmModal');
+    const questionText = document.getElementById('confirmQuestion');
+    const okBtn = document.getElementById('confirmOkBtn');
+
+    if (!modal || !questionText || !okBtn) return; // Safety check
+
+    questionText.innerText = message;
+    modal.style.display = 'flex';
+
+    // Set up the click event for the OK button
+    // We use .onclick to overwrite any previous events
+    okBtn.onclick = function() {
+        callback();
+        closeConfirmModal();
+    };
+}
+
+function closeConfirmModal() {
+    const modal = document.getElementById('confirmModal');
+    if (modal) modal.style.display = 'none';
+}
+
+
+// ==========================================
+// 1. SECURITY & PERSONALIZATION "THE BOUNCER"
+// ==========================================
+document.addEventListener('DOMContentLoaded', () => {
+    // A. CHECK AUTHENTICATION
+    const storedUser = localStorage.getItem('user');
+    
+    if (!storedUser) {
+        // If no user is found, kick them back to login
+        window.location.href = 'login.html'; 
+        return; // Stop running the rest of the code
+    }
+
+    // B. LOAD USER DATA
+    window.user = JSON.parse(storedUser);
+    console.log("Authorized User:", window.user);
+
+    // C. UPDATE UI WITH REAL NAME
+    updateProfileUI();
+
+    // D. START APP
+    loadPapersFromBackend(); 
+    renderDashboard(); 
+    setupSearchFeature();
+});
+
+// Helper function to update sidebar/header details
+function updateProfileUI() {
+    // Update Name
+    const profileNameEl = document.querySelector('.profile-info h4');
+    if (profileNameEl) profileNameEl.innerText = `${window.user.firstName} ${window.user.lastName}`;
+
+    // Update Role/Dept
+    const profileRoleEl = document.querySelector('.profile-info p');
+    if (profileRoleEl) profileRoleEl.innerText = `${window.user.dept} ${window.user.level}L • ${window.user.role.toUpperCase()}`;
+
+    // Update Welcome Message (if you have one)
+    const welcomeEl = document.getElementById('welcomeMsg');
+    if (welcomeEl) welcomeEl.innerText = `Welcome back, ${window.user.firstName}`;
+}
+
+
+// ==========================================
+// LOGOUT FUNCTIONALITY
+// ==========================================
+function logout() {
+    if(confirm("Are you sure you want to log out?")) {
+        // 1. Clear Data
+        localStorage.removeItem('user');
+        
+        // 2. Redirect to Login
+        window.location.href = 'login.html';
+    }
 }

@@ -91,13 +91,12 @@
                 </a>
             </div>
         </nav>
-        
-        <div class="mobile-sidebar-footer" id="mobileSidebarFooter">
+        <!-- <div class="mobile-sidebar-footer" id="mobileSidebarFooter">
             <div class="mobile-level-manager glass">
                 <p id="mobilePromoteText">Next: <span id="mobileNextLevelLabel">200L</span></p>
                 <button onclick="promoteUserLevel()" class="btn-promote">Promote Me</button>
             </div>
-        </div>
+        </div> -->
     </aside>
 
     <!-- Auth Modal (unchanged) -->
@@ -185,12 +184,14 @@
                                 <a href="#" class="nav-item" onclick="viewArchiveLevel('500')">500 Level</a>
                             </div>
                         </div>
-                <div id="adminOnlyNav" style="display: none;">
-                    <div class="nav-label">Management</div>
-                    <a href="javascript:void(0)" onclick="openAdminPanel()" class="nav-item">
-                        <i class="fas fa-plus-circle"></i> Add Questions
-                    </a>
-                </div>
+                  <div id="adminOnlyNav" style="display: none; margin-top: 20px;">
+    <div class="nav-label" style="font-size: 0.8rem; opacity: 0.6; margin-bottom: 10px;">MANAGEMENT</div>
+    
+    <a href="javascript:void(0)" class="nav-item" onclick="openAdminPanel()">
+        <i class="fas fa-plus-circle"></i>
+        <span>Add Questions</span>
+    </a>
+</div>
             </nav>
             <div class="sidebar-footer" id="sidebarFooter">
                 <div class="level-manager glass">
@@ -250,7 +251,7 @@
                         <label>Department</label>
                     <select id="adminDept"> 
                          <option>Select</option>
-                                 <option>ITH</option>
+                                <option>ITH</option>
                                 <option>AUD</option>
                                 <option>BCH</option>
                                 <option>BMB</option>
@@ -352,7 +353,6 @@
                         <select id="examSemester">
                             <option value="First">First Semester</option>
                             <option value="Second">Second Semester</option>
-                            <option value="Third">Third Semester</option>
                         </select>
                     </div>
                     <div class="input-group">
@@ -454,7 +454,7 @@
 
     <!-- <script src="js/app.js"></script> -->
     <script src="js/data.js"></script>
-     <script src="js/auth.js"></script>
+     <!-- <script src="js/auth.js"></script> -->
     <script src="js/ui.js"></script>
     <script src="js/admin.js"></script>
     <script src="js/responsive.js"></script>

@@ -155,11 +155,11 @@ renderDashboard = function() {
 // };
 
 // Enhance promote to update mobile UI
-const originalPromoteUserLevel = promoteUserLevel;
-promoteUserLevel = function() {
-    originalPromoteUserLevel();
-    updateMobileUserInfo();
-};
+// const originalPromoteUserLevel = promoteUserLevel;
+// promoteUserLevel = function() {
+//     originalPromoteUserLevel();
+//     updateMobileUserInfo();
+// };
 
 // Update the auth modal for mobile
 const originalHandleAuth = handleAuth;

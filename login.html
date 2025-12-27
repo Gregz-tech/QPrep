@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QPrep | Access Portal</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/auth.css">
+</head>
+<body>
+
+    <div class="scene">
+        <div class="card" id="mainCard">
+            
+            <div class="card-face card-front">
+                <form id="loginForm">
+                    <div class="logo-box"><i class="fas fa-graduation-cap"></i></div>
+                    <h1 class="title">Welcome Back</h1>
+                    <p class="subtitle">Access your QPrep repository</p>
+                    
+                    <input type="text" id="loginIdentifier" placeholder="Matric No / Email / Username" class="glass-input" required />
+                    <input type="password" id="loginPass" placeholder="Password" class="glass-input" required />
+                    
+                    <div class="context-box">
+                        <p class="field-label">Verify Session Context:</p>
+                        <div class="input-group-row">
+                            <select id="loginDept" class="glass-input" required>
+                                <option value="" disabled selected>Dept</option>
+                                <option value="ITH">ITH</option>
+                                <option value="MCB">MCB</option>
+                                <option value="NUR">NUR</option>
+                                <option value="BCH">BCH</option>
+                                <option value="PHM">PHM</option>
+                            </select>
+                            <select id="loginLevel" class="glass-input" required>
+                                <option value="" disabled selected>Level</option>
+                                <option value="100">100L</option>
+                                <option value="200">200L</option>
+                                <option value="300">300L</option>
+                                <option value="400">400L</option>
+                                <option value="500">500L</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button type="submit" id="loginBtn" class="glow-on-hover">Enter Portal</button>
+                    
+                    <p class="toggle-text">
+                        New Scholar? <a href="#" id="triggerSignUp">Create Account</a>
+                    </p>
+                </form>
+            </div>
+
+            <div class="card-face card-back">
+                <form id="registerForm">
+                    <h1 class="title">Join QPrep</h1>
+                    <p class="subtitle">Create your academic profile</p>
+                    
+                    <div class="scrollable-form-area">
+                        <div class="input-group-row">
+                            <input type="text" id="regFirstname" placeholder="First Name" class="glass-input" required />
+                            <input type="text" id="regLastname" placeholder="Last Name" class="glass-input" required />
+                        </div>
+
+                        <div class="input-group-row">
+                            <input type="text" id="regUsername" placeholder="Username" class="glass-input" required />
+                            <input type="text" id="regMatric" placeholder="Matric No." class="glass-input" required />
+                        </div>
+
+                        <input type="email" id="regEmail" placeholder="Student Email" class="glass-input" required />
+                        
+                        <div class="input-group-row">
+                            <select id="regDept" class="glass-input" required>
+                                <option value="" disabled selected>Department</option>
+                                <option value="ITH">ITH</option>
+                                <option value="MCB">MCB</option>
+                                <option value="NUR">NUR</option>
+                                <option value="BCH">BCH</option>
+                                <option value="PHM">PHM</option>
+                            </select>
+                            <select id="regLevel" class="glass-input" required>
+                                <option value="" disabled selected>Level</option>
+                                <option value="100">100L</option>
+                                <option value="200">200L</option>
+                                <option value="300">300L</option>
+                                <option value="400">400L</option>
+                                <option value="500">500L</option>
+                            </select>
+                        </div>
+
+                        <input type="password" id="regPass" placeholder="Create Password" class="glass-input" required />
+                        
+                        <input type="hidden" id="regRole" value="student">
+                    </div>
+
+                    <button type="submit" id="regBtn" class="glow-on-hover">Register</button>
+                    
+                    <p class="toggle-text">
+                        Already a member? <a href="#" id="triggerSignIn">Sign In</a>
+                    </p>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/auth.js"></script>
+</body>
+</html>
