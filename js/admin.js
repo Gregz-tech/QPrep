@@ -1,12 +1,14 @@
-// CONFIGURATION
-// const API_URL = 'http://localhost:5000/api/papers'; 
-const API_URL = 'https://qprep-backend-1.onrender.com/api/papers'; 
+// ==========================================
+// CONFIGURATION & SETUP
+// ==========================================
 
+// ✅ 1. CONNECT TO LIVE RENDER BACKEND
+const API_URL = 'https://qprep-backend-1.onrender.com/api/papers'; 
 
 let activeSections = [];
 
 // ==========================================
-// 1. UI & PANEL MANAGEMENT
+// 2. UI & PANEL MANAGEMENT (Your Existing UI Logic)
 // ==========================================
 
 function openAdminPanel() {
@@ -28,6 +30,7 @@ function closeAdminPanel() {
     document.getElementById('adminYear').value = "";
     document.getElementById('adminInstructions').value = "";
     document.getElementById('pqUpload').value = ""; 
+    document.getElementById('objFieldsContainer').innerHTML = ""; // Clear UI
 }
 
 function addNewSection() {
@@ -63,7 +66,7 @@ function renderAdminWorkspace() {
                 <input type="text" value="${sec.title}" onchange="updateSecTitle(${sec.id}, this.value)" 
                     class="glass-input" style="width: 70%; font-weight:bold; font-size: 1.1rem; color: var(--accent);">
                 <button onclick="removeSection(${sec.id})" class="logout-btn" style="padding: 8px 15px; font-size:0.8rem; border-radius: 8px;">
-                    <i class="fas fa-trash-alt"></i> Remove Section
+                    <i class="fas fa-trash-alt"></i> Remove
                 </button>
             </div>
             
@@ -76,7 +79,7 @@ function renderAdminWorkspace() {
                 `).join('')}
             </div>
             <button onclick="addQuestionToSection(${sec.id})" class="btn-secondary" style="width:100%; margin-top:20px; padding: 12px; border-style: dashed;">
-                <i class="fas fa-plus-circle"></i> Add Another Question
+                <i class="fas fa-plus-circle"></i> Add Question
             </button>
         </div>`).join('');
 }
@@ -86,123 +89,115 @@ window.updateQText = (sid, qi, val) => { activeSections.find(s => s.id === sid).
 
 
 // ==========================================
-// 2. MAIN SAVE LOGIC (Frontend -> Node.js)
+// 3. FILE CONVERSION ENGINE (The New Part)
+// ==========================================
+const convertToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = error => reject(error);
+    });
+};
+
+function showNotification(msg, type) {
+    alert(msg); // You can replace this with a fancy toast notification later
+}
+
+// ==========================================
+// 4. MAIN UPLOAD LOGIC (Connected to Render)
 // ==========================================
 
 async function saveNewQuestion() {
+    // A. Gather Inputs
     const code = document.getElementById('adminCourseCode').value.toUpperCase().trim();
     const title = document.getElementById('adminCourseTitle').value.trim();
     const dept = document.getElementById('adminDept').value;
     const level = document.getElementById('adminLevel').value;
     const year = document.getElementById('adminYear').value.trim();
     const semester = document.getElementById('adminSemester').value;
-    const fileInput = document.getElementById('pqUpload');
     const instructions = document.getElementById('adminInstructions').value.trim();
-
+    
+    // B. Validation
     if (!code || !year || !title) {
         showNotification("Please fill in Course Code, Title, and Year.", "error");
         return;
     }
 
-    const saveBtn = document.querySelector('.btn-primary');
+    // C. Button UI Feedback
+    const saveBtn = document.querySelector('.btn-primary'); // Assumes the Save button is the first .btn-primary
     const originalText = saveBtn.innerText;
-    saveBtn.innerHTML = `Uploading...`;
+    saveBtn.innerText = "Uploading to Cloud...";
     saveBtn.disabled = true;
 
     try {
-        // Process Files
-        let processedImages = [];
-        let processedDocs = [];
+        // D. Handle File Upload (The Priority)
+        const fileInput = document.getElementById('pqUpload');
+        const file = fileInput.files[0]; // We only take the FIRST file for now
+        
+        let base64Data = "";
+        let fileType = "image"; // Default
 
-        if (fileInput && fileInput.files.length > 0) {
-            const uploadPromises = Array.from(fileInput.files).map(file => {
-                return new Promise((resolve, reject) => {
-                    const reader = new FileReader();
-                    reader.onload = (e) => resolve({ name: file.name, type: file.type, data: e.target.result });
-                    reader.onerror = (error) => reject(error);
-                    reader.readAsDataURL(file);
-                });
-            });
-
-            const results = await Promise.all(uploadPromises);
-            
-            results.forEach(f => {
-                if (f.type.startsWith('image/')) {
-                    processedImages.push(f.data);
-                } else {
-                    processedDocs.push(f);
-                }
-            });
+        if (file) {
+            base64Data = await convertToBase64(file);
+            fileType = file.type.includes('pdf') ? 'pdf' : 'image';
+        } else {
+            // Check if they typed questions manually? 
+            // For now, we REQUIRE a file for simplicity, or send empty string
+            if(activeSections.length === 0) {
+                 throw new Error("Please upload a PDF/Image OR type questions.");
+            }
         }
 
-        const paperPayload = {
+        // E. Construct Payload (Matches Backend Schema)
+        const payload = {
             courseCode: code,
             courseTitle: title,
             department: dept,
             level: level,
             year: year,
             semester: semester,
-            instructions: instructions,
-            sections: activeSections,
-            imagePaths: processedImages,
-            documents: processedDocs
+            type: fileType, 
+            fileData: base64Data, // This is the actual PDF/Image
+            sections: activeSections // Optional: Sent if backend supports it later
         };
 
+        // F. Send to Render
+        console.log("Sending Payload:", payload); // Debugging
+        
         const response = await fetch(API_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(paperPayload)
+            body: JSON.stringify(payload)
         });
 
         const result = await response.json();
 
         if (response.ok) {
-            showNotification(`Success! ${code} saved to database.`, "success");
+            showNotification(`✅ Success! ${code} has been uploaded to the database.`, "success");
             closeAdminPanel();
-            setTimeout(() => location.reload(), 1500); 
+            // location.reload(); // Optional: Reload to see changes
         } else {
-            throw new Error(result.error || result.message || "Server rejected the data");
+            throw new Error(result.error || "Server rejected the data");
         }
 
     } catch (error) {
-        console.error("Save Error:", error);
+        console.error("Upload Error:", error);
         showNotification("Upload Failed: " + error.message, "error");
+    } finally {
+        // Reset Button
         saveBtn.innerText = originalText;
         saveBtn.disabled = false;
     }
 }
 
-function editPaper(dept, level, code, year, sem) {
-    const course = questionBank[dept]?.[level]?.[code];
-    if (!course) return showNotification("Paper not found locally. Try refreshing.", "error");
-
-    const paper = course.data[year]?.[sem];
-    if (!paper) return showNotification("Specific year data not found.", "error");
-
-    openAdminPanel();
-    
-    document.getElementById('adminCourseCode').value = code;
-    document.getElementById('adminCourseTitle').value = course.name;
-    document.getElementById('adminDept').value = dept;
-    document.getElementById('adminLevel').value = level;
-    document.getElementById('adminYear').value = year;
-    document.getElementById('adminSemester').value = sem;
-    document.getElementById('adminInstructions').value = paper.instructions || "";
-
-    if (paper.sections && paper.sections.length > 0) {
-        activeSections = paper.sections;
-        renderAdminWorkspace();
-    } else {
-        activeSections = [];
-        addNewSection();
-    }
-    showNotification(`Editing ${code} (${year}).`, "info");
-}
-
+// Global Exports
 window.openAdminPanel = openAdminPanel;
 window.closeAdminPanel = closeAdminPanel;
 window.addNewSection = addNewSection;
 window.removeSection = removeSection;
 window.addQuestionToSection = addQuestionToSection;
 window.saveNewQuestion = saveNewQuestion;
-window.editPaper = editPaper;
+window.editPaper = (dept, level, code) => { 
+    showNotification("Edit feature coming soon to cloud version!", "info"); 
+};
