@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QPrep |FUHSI Academic PQs</title>
+    <title>QPrep | FUHSI Academic PQs</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
@@ -11,7 +11,6 @@
 <body class="dark-mode">
     <div class="bg-container"></div>
 
-    <!-- Mobile Hamburger Button -->
     <div class="mobile-header">
         <button class="hamburger-btn" id="hamburgerBtn">
             <i class="fas fa-bars"></i>
@@ -42,10 +41,8 @@
 </div>
 
 
-    <!-- Mobile Sidebar Overlay -->
     <div class="mobile-overlay" id="mobileOverlay"></div>
     
-    <!-- Mobile Sidebar -->
     <aside class="sidebar-mobile glass" id="mobileSidebar">
         <div class="mobile-sidebar-header">
             <div class="mobile-sidebar-user">
@@ -91,15 +88,8 @@
                 </a>
             </div>
         </nav>
-        <!-- <div class="mobile-sidebar-footer" id="mobileSidebarFooter">
-            <div class="mobile-level-manager glass">
-                <p id="mobilePromoteText">Next: <span id="mobileNextLevelLabel">200L</span></p>
-                <button onclick="promoteUserLevel()" class="btn-promote">Promote Me</button>
-            </div>
-        </div> -->
     </aside>
 
-    <!-- Auth Modal (unchanged) -->
     <div id="authModal" class="modal-overlay">
         <div class="auth-card glass">
             <div class="auth-header">
@@ -142,8 +132,8 @@
                                 <option value="100">100L</option>
                                 <option value="200">200L</option>
                                 <option value="300">300L</option>
-                                <option value="100">400L</option>
-                                <option value="200">500L</option>
+                                <option value="400">400L</option>
+                                <option value="500">500L</option>
                              </select>
                         </div>
                     </div>
@@ -164,7 +154,6 @@
     </div>
 
     <div class="app-container">
-        <!-- Desktop Sidebar -->
         <aside class="sidebar glass">
             <div class="logo"><i class="fas fa-graduation-cap"></i> <span>QPrep</span></div>
             <nav class="nav-menu">
@@ -195,9 +184,7 @@
             </nav>
             <div class="sidebar-footer" id="sidebarFooter">
                 <div class="level-manager glass">
-                    <!-- <p id="promoteText">Next: <span id="nextLevelLabel">200L</span></p>
-                    <button onclick="promoteUserLevel()" class="btn-promote">Promote Me</button> -->
-                </div>
+                   </div>
             </div>
         </aside>
 
@@ -220,7 +207,6 @@
         <div class="viewer-content">
             <div class="viewer-header">
                 <h2>Question Builder</h2>
-              
             </div>
             <div class="admin-grid">
                 <div class="admin-form glass">
@@ -233,24 +219,18 @@
                         <label style="color: var(--accent); font-weight: bold; display: block; margin-bottom: 8px;">
                             <i class="fas fa-camera"></i> Quick Upload (Scan PQ)
                         </label>
-                                        <div class="input-group">
+                                            <div class="input-group">
                     <label><i class="fas fa-images"></i> Upload Scanned Pages</label>
-                    <input type="file" id="pqUpload" accept="image/*" multiple class="glass-input">
+                    <input type="file" id="pqUpload" accept="image/*, .pdf" class="glass-input">
                     <small style="color: var(--text-dim); display: block; margin-top: 5px;">
-                        Hold Ctrl (Win) or Cmd (Mac) to select multiple images.
+                        Select an Image or PDF file.
                     </small>
                 </div>
-                        <!-- </p>
-                             <div class="input-group">
-                            <label><i class="fas fa-images"></i> Upload Scanned Pages (Select all pages)</label>
-                            <input type="file" id="pqUpload" accept="image/*" multiple class="glass-input">
-                        </div> -->
                     </div>
 
                     <div class="input-group">
                         <label>Department</label>
                     <select id="adminDept"> 
-                         <option>Select</option>
                                 <option>ITH</option>
                                 <option>AUD</option>
                                 <option>BCH</option>
@@ -293,138 +273,22 @@
                     </div>
                 </div>
                  <div class="admin-actions">
-    <button onclick="saveNewQuestion()" class="btn-primary">Save Paper</button>
-    <button onclick="clearStorage()" class="btn-primary danger" style="width: auto; margin-left: 10px;">
+    <button type="button" onclick="saveNewQuestion()" class="btn-primary">Save Paper</button>
+    <button type="button" onclick="clearStorage()" class="btn-primary danger" style="width: auto; margin-left: 10px;">
         <i class="fas fa-trash-alt"></i> Reset Bank
     </button>
-    <button onclick="closeAdminPanel()" class="btn-secondary">Cancel</button>
+    <button type="button" onclick="closeAdminPanel()" class="btn-secondary">Cancel</button>
 </div>
                 <div class="admin-workspace glass">
                     <div id="objFieldsContainer"></div>
-                    <!-- <button onclick="addObjField()" class="btn-secondary">+ Add Question</button> -->
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Add this section after the admin panel -->
-<div id="questionBuilder" class="viewer-overlay glass-heavy" style="display: none;">
-    <div class="viewer-content">
-        <div class="viewer-header">
-            <h2><i class="fas fa-file-alt"></i> Question Builder</h2>
-            <div>
-                <button onclick="saveFullQuestion()" class="btn-primary">
-                    <i class="fas fa-save"></i> Save Question
-                </button>
-                <button onclick="closeQuestionBuilder()" class="btn-secondary">
-                    <i class="fas fa-times"></i> Cancel
-                </button>
-            </div>
+    <div id="questionBuilder" class="viewer-overlay glass-heavy" style="display: none;">
         </div>
-        
-        <div class="question-builder-container">
-            <!-- University Header Section -->
-            <div class="builder-section glass">
-                <h3><i class="fas fa-university"></i> University Header</h3>
-                <div class="input-row">
-                    <div class="input-group">
-                        <label>University Name</label>
-                        <input type="text" id="uniName" value="FEDERAL UNIVERSITY OF HEALTH SCIENCES, ILA-ORANGUN">
-                    </div>
-                    <div class="input-group">
-                        <label>Faculty</label>
-                        <input type="text" id="facultyName" value="FACULTY OF ALLIED HEALTH SCIENCES">
-                    </div>
-                </div>
-                <div class="input-row">
-                    <div class="input-group">
-                        <label>Department</label>
-                        <input type="text" id="departmentName" value="DEPARTMENT OF INFORMATION TECHNOLOGY AND HEALTH INFORMATICS">
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Exam Details Section -->
-            <div class="builder-section glass">
-                <h3><i class="fas fa-calendar-alt"></i> Exam Details</h3>
-                <div class="input-row">
-                    <div class="input-group">
-                        <label>Semester</label>
-                        <select id="examSemester">
-                            <option value="First">First Semester</option>
-                            <option value="Second">Second Semester</option>
-                        </select>
-                    </div>
-                    <div class="input-group">
-                        <label>Exam Type</label>
-                        <select id="examType">
-                            <option value="FINAL">Final Examination</option>
-                            <option value="MIDTERM">Midterm Examination</option>
-                            <option value="QUIZ">Quiz</option>
-                            <option value="TEST">Test</option>
-                        </select>
-                    </div>
-                    <div class="input-group">
-                        <label>Academic Session</label>
-                        <input type="text" id="academicSession" value="2024/2025">
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Course Details Section -->
-            <div class="builder-section glass">
-                <h3><i class="fas fa-book"></i> Course Details</h3>
-                <div class="input-row">
-                    <div class="input-group">
-                        <label>Course Code</label>
-                        <input type="text" id="courseCode" placeholder="e.g., ITH 303">
-                    </div>
-                    <div class="input-group">
-                        <label>Course Title</label>
-                        <input type="text" id="courseTitle" placeholder="e.g., Object Oriented Design and Programming">
-                    </div>
-                    <div class="input-group">
-                        <label>Units</label>
-                        <input type="text" id="courseUnits" placeholder="e.g., 2 Units">
-                    </div>
-                </div>
-                <div class="input-group">
-                    <label>Instructions</label>
-                    <textarea id="examInstructions" placeholder="e.g., Answer all questions appropriately"></textarea>
-                </div>
-                <div class="input-group">
-                    <label>Time Allowed</label>
-                    <input type="text" id="examTime" placeholder="e.g., 120 mins">
-                </div>
-            </div>
-            
-            <!-- Sections Management -->
-            <div class="builder-section glass">
-                <h3><i class="fas fa-columns"></i> Exam Sections</h3>
-                <div id="sectionsContainer">
-                    <!-- Sections will be added here dynamically -->
-                </div>
-                <button type="button" onclick="addNewSection()" class="btn-secondary" style="margin-top: 15px;">
-                    <i class="fas fa-plus"></i> Add Section
-                </button>
-                
-            </div>
-            
-            <!-- Preview Section -->
-            <div class="builder-section glass">
-                <h3><i class="fas fa-eye"></i> Live Preview</h3>
-                <div id="questionPreview" class="question-preview glass">
-                    <div class="preview-placeholder">
-                        <i class="fas fa-eye-slash"></i>
-                        <p>Fill in the details above to see a preview of your exam paper</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 
-<!-- Single Question Viewer -->
 <div id="singleQuestionViewer" class="viewer-overlay glass-heavy" style="display: none;">
     <div class="viewer-content">
         <div class="viewer-header">
@@ -437,7 +301,6 @@
     </div>
 </div>
 
-    <!-- Paper Viewer (unchanged) -->
     <div id="paperViewer" class="viewer-overlay glass-heavy" style="display: none;">
         <div class="viewer-content">
             <button onclick="closeViewer()" class="btn-secondary">Close</button>
@@ -450,16 +313,11 @@
         </div>
     </div>
 
-    
-
-    <!-- <script src="js/app.js"></script> -->
     <script src="js/data.js"></script>
-     <!-- <script src="js/auth.js"></script> -->
     <script src="js/ui.js"></script>
     <script src="js/admin.js"></script>
     <script src="js/responsive.js"></script>
     <script src="js/app.js"></script>
-    <script src="/js/ocr.js"></script>
-
-</body>
+    <!-- <script src="/js/ocr.js"></script> -->
+    </body>
 </html>

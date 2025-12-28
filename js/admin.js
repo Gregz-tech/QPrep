@@ -1,5 +1,7 @@
 // CONFIGURATION
-const API_URL = 'http://localhost:5000/api/papers'; 
+// const API_URL = 'http://localhost:5000/api/papers'; 
+const API_URL = 'https://qprep-backend-1.onrender.com/api/papers'; 
+
 
 let activeSections = [];
 
