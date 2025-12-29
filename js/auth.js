@@ -52,7 +52,7 @@ async function sendAuthRequest(endpoint, data, btnId, originalText) {
             btn.style.opacity = "1";
             btn.disabled = false;
             btn.style.cursor = 'pointer';
-            alert(result.error || "An error occurred. Please check your inputs.");
+            showToast(result.error || "An error occurred. Please check your inputs.", "error");
             return { success: false };
         }
     } catch (error) {
@@ -62,7 +62,7 @@ async function sendAuthRequest(endpoint, data, btnId, originalText) {
         btn.style.opacity = "1";
         btn.disabled = false;
         btn.style.cursor = 'pointer';
-        alert("Cannot connect to server. Check internet connection.");
+        showToast("Cannot connect to server. Check internet connection.", "error");
         return { success: false };
     }
     // Note: Success state reset is handled in the calling functions upon successful redirect/flip
@@ -89,7 +89,7 @@ document.getElementById('registerForm').addEventListener('submit', async (e) => 
     const result = await sendAuthRequest('register', formData, 'regBtn', 'Register');
 
     if (result.success) {
-        alert("Registration Successful! Please sign in.");
+        showToast("Registration Successful! Please sign in.", "success");
         // Flip back to login side automatically
         mainCard.classList.remove("is-flipped");
         // Clear form & reset button

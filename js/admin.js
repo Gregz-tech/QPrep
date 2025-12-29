@@ -101,7 +101,7 @@ const convertToBase64 = (file) => {
 };
 
 function showNotification(msg, type) {
-    alert(msg); // You can replace this with a fancy toast notification later
+    showToast(msg);
 }
 
 // ==========================================

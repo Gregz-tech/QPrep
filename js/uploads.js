@@ -29,7 +29,7 @@ document.getElementById('uploadBtn').addEventListener('click', async (e) => {
         const file = fileInput.files[0];
         
         if (!file) {
-            alert("Please select a Question Paper file first.");
+            showToast("Please select a Question Paper file first.", "error");
             throw new Error("No file selected");
         }
 
@@ -59,17 +59,17 @@ document.getElementById('uploadBtn').addEventListener('click', async (e) => {
         const result = await response.json();
 
         if (response.ok) {
-            alert("✅ Success! Question Paper uploaded to database.");
+            showToast("✅ Success! Question Paper uploaded to database.", "success");
             // Optional: Redirect back to dashboard
             window.location.href = 'index.html';
         } else {
-            alert("Upload Failed: " + (result.error || "Unknown error"));
+            showToast("Upload Failed: " + (result.error || "Unknown error", "error"));
         }
 
     } catch (error) {
         console.error(error);
         if(error.message !== "No file selected") {
-            alert("Network Error. Please check your internet connection.");
+            showToast("Network Error. Please check your internet connection.", "error");
         }
     } finally {
         // Reset Button

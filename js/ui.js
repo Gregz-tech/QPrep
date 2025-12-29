@@ -396,7 +396,7 @@ function updateProfileUI() {
 }
 
 function showNotification(message, type = 'success') {
-    alert(message); // Simple alert for now
+    showToast(message);
 }
 
 // Search
@@ -409,14 +409,29 @@ function setupSearchFeature() {
     });
 }
 
-// Logout
+// 1. Trigger the Modal (Attached to your Logout button)
 window.logoutUser = function() {
-    if(confirm("Are you sure you want to logout?")) {
+    const modal = document.getElementById('confirmModal');
+    
+    // Show your custom modal
+    modal.style.display = 'flex'; 
+
+    // 2. Define what happens when they click "Ok"
+    const okBtn = document.getElementById('confirmOkBtn');
+    
+    // We use .onclick here to ensure we don't stack multiple event listeners
+    okBtn.onclick = function() {
+        // Perform the actual logout
         localStorage.removeItem('user'); 
         window.location.href = 'login.html';
-    }
+    };
 };
 
+// 3. Helper to Close the Modal (Attached to "Cancel")
+window.closeConfirmModal = function() {
+    const modal = document.getElementById('confirmModal');
+    modal.style.display = 'none';
+};
 // Archive Toggle
 window.toggleArchiveMenu = function() {
     const desktopMenu = document.querySelector('.sidebar #archiveLevels');
@@ -424,5 +439,40 @@ window.toggleArchiveMenu = function() {
 };
 
 window.viewArchiveLevel = function(level) {
-    alert(`Archive for ${level}L coming soon!`);
+    showToast(`Archive for ${level}L coming soon!`, "error");
 };
+
+// --- TOAST NOTIFICATION ENGINE ---
+function showToast(message, type = 'info') {
+    const container = document.getElementById('toast-container');
+
+    // 1. Create the Element
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    
+    // 2. Choose Icon
+    let iconName = 'info-circle';
+    if (type === 'success') iconName = 'check-circle';
+    if (type === 'error') iconName = 'exclamation-triangle';
+
+    // 3. Set Content
+    toast.innerHTML = `
+        <i class="fas fa-${iconName}"></i>
+        <span>${message}</span>
+    `;
+
+    // 4. Add to Screen
+    container.appendChild(toast);
+
+    // 5. Remove after 3.5 seconds
+    setTimeout(() => {
+        toast.style.animation = 'slideOut 0.4s ease forwards';
+        // Wait for animation to finish before deleting
+        setTimeout(() => {
+            if (toast.parentElement) toast.remove();
+        }, 400);
+    }, 3500);
+}
+
+// Make it global so you can call it from anywhere
+window.showToast = showToast;

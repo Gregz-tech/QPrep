@@ -1605,3 +1605,67 @@ body {
     border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
+/* --- TOAST CONTAINER --- */
+#toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+/* --- THE NOTIFICATION CARD --- */
+.toast {
+    min-width: 300px;
+    padding: 16px 20px;
+    background: rgba(20, 20, 20, 0.9); /* Dark glass */
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-left: 5px solid; /* Color stripe */
+    border-radius: 12px;
+    color: white;
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.95rem;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    
+    /* Animation */
+    animation: slideIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    opacity: 0;
+    transform: translateX(100%);
+}
+
+/* --- COLORS --- */
+.toast.success { border-left-color: #00e676; } /* Bright Green */
+.toast.error   { border-left-color: #ff1744; } /* Bright Red */
+.toast.info    { border-left-color: #2979ff; } /* Bright Blue */
+
+/* --- ICONS --- */
+.toast i { font-size: 1.2rem; }
+.toast.success i { color: #00e676; }
+.toast.error i   { color: #ff1744; }
+.toast.info i    { color: #2979ff; }
+
+/* --- ANIMATIONS --- */
+@keyframes slideIn {
+    to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideOut {
+    to { opacity: 0; transform: translateX(100%); }
+}
+
+/* --- MOBILE RESPONSIVENESS --- */
+@media (max-width: 600px) {
+    #toast-container {
+        right: 50%;
+        transform: translateX(50%); /* Center it */
+        width: 90%;
+    }
+    .toast { width: 100%; }
+}
