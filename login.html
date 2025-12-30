@@ -7,6 +7,20 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/auth.css">
+    <style>
+        /* Add style for password toggle */
+        .password-container { position: relative; width: 100%; }
+        .toggle-password {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: rgba(255, 255, 255, 0.6);
+            z-index: 10;
+        }
+        .helper-text { font-size: 0.75rem; color: rgba(255,255,255,0.6); margin-top: -10px; margin-bottom: 15px; text-align: left; width: 100%; padding-left: 5px; }
+    </style>
 </head>
 <body>
 
@@ -19,38 +33,15 @@
                     <h1 class="title">Welcome Back</h1>
                     <p class="subtitle">Access your QPrep repository</p>
                     
-                    <input type="text" id="loginIdentifier" placeholder="Matric No / Email / Username" class="glass-input" required />
-                    <input type="password" id="loginPass" placeholder="Password" class="glass-input" required />
+                    <input type="text" id="loginIdentifier" placeholder="Email or Username" class="glass-input" required />
                     
-                    <div class="context-box">
-                        <p class="field-label">Verify Session Context:</p>
-                        <div class="input-group-row">
-                            <select id="loginDept" class="glass-input" required>
-                                <option value="" disabled selected>Dept</option>
-                                    <option value="ITH">ITH</option>
-                                <option value="AUD">AUD</option>
-                                <option value="BCH">BCH</option>
-                                <option value="BMB">BMB</option>
-                                <option value="EHS">EHS</option>
-                                <option value="MBBS">MBBS</option>
-                                <option value="MCB">MCB</option>
-                                <option value="MCB">MLS</option>
-                                <option value="NUR">NUR</option>
-                                <option value="NUT">NUT</option>
-                                <option value="PHM">PHM</option>
-                                <option value="PRT">PRT</option>
-                                <option value="PST">PST</option>
-                                
-                            </select>
-                            <select id="loginLevel" class="glass-input" required>
-                                <option value="" disabled selected>Level</option>
-                                <option value="100">100L</option>
-                                <option value="200">200L</option>
-                                <option value="300">300L</option>
-                                <option value="400">400L</option>
-                                <option value="500">500L</option>
-                            </select>
-                        </div>
+                    <div class="password-container">
+                        <input type="password" id="loginPass" placeholder="Password" class="glass-input" required />
+                        <i class="fas fa-eye toggle-password" onclick="togglePass('loginPass', this)"></i>
+                    </div>
+                    
+                    <div style="text-align: right; width: 100%; margin-bottom: 15px;">
+                        <a href="#" style="color: var(--accent); font-size: 0.8rem; text-decoration: none;">Forgot Password?</a>
                     </div>
 
                     <button type="submit" id="loginBtn" class="glow-on-hover">Enter Portal</button>
@@ -68,36 +59,29 @@
                     
                     <div class="scrollable-form-area">
                         <div class="input-group-row">
-                            <input type="text" id="regFirstname" placeholder="First Name" class="glass-input" required />
-                            <input type="text" id="regLastname" placeholder="Last Name" class="glass-input" required />
+                            <input type="text" id="regUsername" placeholder="Choose Username" class="glass-input" required />
                         </div>
 
-                        <div class="input-group-row">
-                            <input type="text" id="regUsername" placeholder="Username" class="glass-input" required />
-                            <input type="text" id="regMatric" placeholder="Matric No." class="glass-input" required />
-                        </div>
-
-                        <input type="email" id="regEmail" placeholder="Student Email" class="glass-input" required />
+                        <input type="email" id="regEmail" placeholder="Active Email Address" class="glass-input" required />
+                        <p class="helper-text"><i class="fas fa-info-circle"></i> Used for recovery & security</p>
                         
+                        <select id="regInstitution" class="glass-input" onchange="populateDepartments()" required>
+                            <option value="">Select Institution</option>
+                            <option value="FUHSI">Fed. Univ. of Health Sciences (FUHSI)</option>
+                            <option value="OAU">Obafemi Awolowo Univ. (OAU)</option>
+                            <option value="UNILAG">Univ. of Lagos (UNILAG)</option>
+                            <option value="UI">Univ. of Ibadan (UI)</option>
+                            <option value="OOU">Olabisi Onabanjo Univ. (OOU)</option>
+                            <option value="OTHER">Other Institution...</option>
+                        </select>
+
                         <div class="input-group-row">
-                            <select id="regDept" class="glass-input" required>
-                                <option value="" disabled selected>Department</option>
-                                <option value="ITH">ITH</option>
-                                <option value="AUD">AUD</option>
-                                <option value="BCH">BCH</option>
-                                <option value="BMB">BMB</option>
-                                <option value="EHS">EHS</option>
-                                <option value="MBBS">MBBS</option>
-                                <option value="MCB">MCB</option>
-                                <option value="MLS">MLS</option>
-                                <option value="NUR">NUR</option>
-                                <option value="NUT">NUT</option>
-                                <option value="PHM">PHM</option>
-                                <option value="PRT">PRT</option>
-                                <option value="PST">PST</option>
+                            <select id="regDept" class="glass-input" disabled required>
+                                <option value="">Select Institution First</option>
                             </select>
+                            
                             <select id="regLevel" class="glass-input" required>
-                                <option value="" disabled selected>Level</option>
+                                <option value="">Level</option>
                                 <option value="100">100L</option>
                                 <option value="200">200L</option>
                                 <option value="300">300L</option>
@@ -106,7 +90,10 @@
                             </select>
                         </div>
 
-                        <input type="password" id="regPass" placeholder="Create Password" class="glass-input" required />
+                        <div class="password-container">
+                            <input type="password" id="regPass" placeholder="Create Password" class="glass-input" required />
+                            <i class="fas fa-eye toggle-password" onclick="togglePass('regPass', this)"></i>
+                        </div>
                         
                         <input type="hidden" id="regRole" value="student">
                     </div>
@@ -120,8 +107,7 @@
             </div>
         </div>
     </div>
-        <div id="toast-container"></div>
-
+    <div id="toast-container"></div>
 
     <script src="js/ui.js"></script>
     <script src="js/auth.js"></script>

@@ -1,40 +1,85 @@
 // ================================================================
-//  CONFIGURATION
+// 1. CONFIGURATION & DATA
 // ================================================================
-
-// Use your live backend URL
 const API_URL = 'https://qprep-backend-1.onrender.com/api/auth';
 
+const universityData = {
+    "FUHSI": ["ITH","AUD", "BCH", "BMB","EHS", "MBBS","MCB", "MLS", "NUR", "NUT","PHM", "PRT", "PST" ],
+    "OAU": ["Computer Science", "Medicine", "Pharmacy", "Law", "Accounting", "Microbiology"],
+    "UNILAG": ["Systems Engineering", "Data Science", "Business Admin", "Economics"],
+    "UI": ["Computer Science", "Economics", "Medicine", "Agriculture"],
+    "OOU": ["Computer Science", "Mass Comm", "Political Science"],
+    "OTHER": ["General Science", "Arts", "Commercial", "Engineering"]
+};
+
+// ================================================================
+// 2. UI HELPERS
+// ================================================================
+
+// A. Flip Card Logic
 const mainCard = document.getElementById('mainCard');
 const triggerSignUp = document.getElementById('triggerSignUp');
 const triggerSignIn = document.getElementById('triggerSignIn');
 
-// --- 1. FLIP ANIMATION TOGGLE ---
-// Simple: Just toggle the 'is-flipped' class on the card container.
-triggerSignUp.addEventListener('click', (e) => {
-    e.preventDefault();
-    mainCard.classList.add("is-flipped");
-});
+if(triggerSignUp) {
+    triggerSignUp.addEventListener('click', (e) => {
+        e.preventDefault();
+        mainCard.classList.add("is-flipped");
+    });
+}
 
-triggerSignIn.addEventListener('click', (e) => {
-    e.preventDefault();
-    mainCard.classList.remove("is-flipped");
-});
+if(triggerSignIn) {
+    triggerSignIn.addEventListener('click', (e) => {
+        e.preventDefault();
+        mainCard.classList.remove("is-flipped");
+    });
+}
 
+// B. Dynamic Department Loader
+window.populateDepartments = function() {
+    const institution = document.getElementById('regInstitution').value;
+    const deptSelect = document.getElementById('regDept');
+    
+    // Reset
+    deptSelect.innerHTML = '<option value="">Select Department</option>';
+    
+    if (institution && universityData[institution]) {
+        deptSelect.disabled = false;
+        universityData[institution].forEach(dept => {
+            const option = document.createElement('option');
+            option.value = dept;
+            option.innerText = dept;
+            deptSelect.appendChild(option);
+        });
+    } else {
+        deptSelect.disabled = true;
+        deptSelect.innerHTML = '<option value="">Select Institution First</option>';
+    }
+};
+
+// C. Password Toggle
+window.togglePass = function(inputId, icon) {
+    const input = document.getElementById(inputId);
+    if (input.type === "password") {
+        input.type = "text";
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+    } else {
+        input.type = "password";
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+    }
+};
 
 // ================================================================
-//  API & FORM LOGIC
+// 3. API & FORM LOGIC
 // ================================================================
 
-// --- 2. API HELPER FUNCTION ---
 async function sendAuthRequest(endpoint, data, btnId, originalText) {
     const btn = document.getElementById(btnId);
-    
-    // UI Loading State
     btn.innerText = "Processing...";
     btn.style.opacity = "0.8";
     btn.disabled = true;
-    btn.style.cursor = 'not-allowed';
 
     try {
         const response = await fetch(`${API_URL}/${endpoint}`, {
@@ -48,102 +93,67 @@ async function sendAuthRequest(endpoint, data, btnId, originalText) {
         if (response.ok) {
             return { success: true, data: result };
         } else {
-            // Put button back to normal state immediately on error
-            btn.innerText = originalText;
-            btn.style.opacity = "1";
-            btn.disabled = false;
-            btn.style.cursor = 'pointer';
-            
-            // ✅ USE TOAST FOR ERROR
-            showToast(result.error || "An error occurred. Please check your inputs.", "error");
+            showToast(result.error || "An error occurred.", "error");
             return { success: false };
         }
     } catch (error) {
-        console.error("Auth Connection Error:", error);
-        // Put button back to normal state immediately on error
+        showToast("Connection Error. Check internet.", "error");
+        return { success: false };
+    } finally {
         btn.innerText = originalText;
         btn.style.opacity = "1";
         btn.disabled = false;
-        btn.style.cursor = 'pointer';
-        
-        // ✅ USE TOAST FOR NETWORK ERROR
-        showToast("Cannot connect to server. Check internet connection.", "error");
-        return { success: false };
     }
 }
 
-// --- 3. HANDLE REGISTRATION ---
-document.getElementById('registerForm').addEventListener('submit', async (e) => {
+// --- HANDLE REGISTRATION ---
+document.getElementById('registerForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    // Collect Data
     const formData = {
-        firstName: document.getElementById('regFirstname').value.trim(),
-        lastName: document.getElementById('regLastname').value.trim(),
         username: document.getElementById('regUsername').value.trim(),
-        matricNumber: document.getElementById('regMatric').value.trim(),
         email: document.getElementById('regEmail').value.trim(),
+        institution: document.getElementById('regInstitution').value,
         department: document.getElementById('regDept').value,
         level: document.getElementById('regLevel').value,
         password: document.getElementById('regPass').value,
         role: document.getElementById('regRole').value
     };
 
-    // Send Request
     const result = await sendAuthRequest('register', formData, 'regBtn', 'Register');
 
     if (result.success) {
-        // ✅ USE TOAST FOR SUCCESS (Replaces alert)
         showToast("Registration Successful! Please sign in.", "success");
-
-        // Flip back to login side automatically
         mainCard.classList.remove("is-flipped");
-        
-        // Clear form & reset button
         document.getElementById('registerForm').reset();
-        const btn = document.getElementById('regBtn');
-        btn.innerText = 'Register';
-        btn.style.opacity = "1";
-        btn.disabled = false;
-        btn.style.cursor = 'pointer';
     }
 });
 
-// --- 4. HANDLE LOGIN ---
-document.getElementById('loginForm').addEventListener('submit', async (e) => {
+// --- HANDLE LOGIN ---
+document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    // Collect Data
     const formData = {
-        identifier: document.getElementById('loginIdentifier').value.trim(),
-        password: document.getElementById('loginPass').value,
-        // Context data for verification
-        department: document.getElementById('loginDept').value,
-        level: document.getElementById('loginLevel').value
+        identifier: document.getElementById('loginIdentifier').value.trim(), // Can be email or username
+        password: document.getElementById('loginPass').value
     };
 
-    // Send Request
     const result = await sendAuthRequest('login', formData, 'loginBtn', 'Enter Portal');
 
-    if (result.success) {
-        // ✅ ADDED SUCCESS TOAST
+  if (result.success) {
         showToast("Login Successful! Redirecting...", "success");
 
-        // 1. Save user token/data to Browser Memory
-        localStorage.setItem('user', JSON.stringify(result.data));
-        
-        // 2. Redirect to Dashboard (Small delay to let user see the toast)
+        // 1. Unpack the response (Separate Token from User Data)
+        // Backend sends: { token: "...", user: { username: "...", department: "..." } }
+        const { token, user } = result.data; 
+
+        // 2. Save them separately
+        localStorage.setItem('token', token);       // Save the ID Card
+        localStorage.setItem('user', JSON.stringify(user)); // Save the User Details
+
+        // 3. Redirect
         setTimeout(() => {
             window.location.href = 'index.html';
         }, 1000);
-    }
-});
-
-// --- 5. AUTO-REDIRECT ---
-window.addEventListener('DOMContentLoaded', () => {
-    // If a user is already saved in memory, skip login and go straight to dashboard
-    if(localStorage.getItem('user')) {
-       // Uncomment below to enable auto-redirect for logged-in users
-       // window.location.href = 'index.html'; 
     }
 });

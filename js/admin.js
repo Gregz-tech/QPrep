@@ -1,14 +1,100 @@
 // ==========================================
 // CONFIGURATION & SETUP
 // ==========================================
-
-// ✅ 1. CONNECT TO LIVE RENDER BACKEND
 const API_URL = 'https://qprep-backend-1.onrender.com/api/papers'; 
+
+// Define your departments list here
+const deptList = ["ITH","AUD", "BCH", "BMB","EHS", "MBBS","MCB", "MLS", "NUR", "NUT","PHM", "PRT", "PST" ];
 
 let activeSections = [];
 
 // ==========================================
-// 2. UI & PANEL MANAGEMENT (Your Existing UI Logic)
+// 1. SECURITY & PERMISSIONS (The New Guard) 🛡️
+// ==========================================
+
+document.addEventListener('DOMContentLoaded', () => {
+    const user = JSON.parse(localStorage.getItem('user'));
+    
+    // 1. Hide Admin Button for Students
+    const adminBtn = document.querySelector('.fab'); 
+    
+    if (!user || user.role === 'student') {
+        if (adminBtn) adminBtn.style.display = 'none';
+    } else {
+        if (adminBtn) adminBtn.style.display = 'flex';
+    }
+
+    // 2. Render the Checkboxes (Wait for DOM)
+    renderDepartmentCheckboxes();
+});
+
+// A. RENDER CHECKBOXES
+function renderDepartmentCheckboxes() {
+    const container = document.getElementById('deptCheckboxContainer');
+    if (!container) return; // Safety check in case HTML isn't updated yet
+
+    container.innerHTML = ''; // Clear existing
+
+    deptList.forEach(dept => {
+        const div = document.createElement('div');
+        div.className = 'checkbox-item';
+        div.innerHTML = `
+            <input type="checkbox" value="${dept}" id="cb_${dept}">
+            <label for="cb_${dept}">${dept}</label>
+        `;
+        container.appendChild(div);
+    });
+}
+
+// B. HANDLE PERMISSIONS & LOCKS
+function checkScopeConstraints() {
+    const user = JSON.parse(localStorage.getItem('user'));
+    
+    // If Moderator, LOCK their scope
+    if (user && user.role === 'moderator' && user.scope) {
+        
+        // 1. Handle Level (Single Select)
+        const levelSelect = document.getElementById('adminLevel');
+        if (levelSelect) {
+            levelSelect.value = user.scope.level;
+            levelSelect.disabled = true; // 🔒 Locked
+        }
+
+        // 2. Handle Departments (Checkboxes)
+        const myDept = user.scope.department;
+        const myBox = document.getElementById(`cb_${myDept}`);
+        
+        // Uncheck everything first
+        const allBoxes = document.querySelectorAll('#deptCheckboxContainer input');
+        allBoxes.forEach(box => {
+            box.checked = false;
+            box.disabled = true; // Disable everyone
+        });
+
+        // Check and Enable ONLY the moderator's department
+        if (myBox) {
+            myBox.checked = true;
+            myBox.disabled = false; // Technically they can't uncheck it if logic forces it, but visual feedback is good
+            // Or keep it disabled but checked to show "This is forced":
+            myBox.disabled = true; 
+        }
+    }
+}
+
+// C. SELECT ALL HELPER
+window.toggleAllDepts = function() {
+    const user = JSON.parse(localStorage.getItem('user'));
+    // Moderators cannot use Select All
+    if (user && user.role === 'moderator') return;
+
+    const checkboxes = document.querySelectorAll('#deptCheckboxContainer input');
+    // Check if all are currently checked to toggle state
+    const allChecked = Array.from(checkboxes).every(c => c.checked);
+    checkboxes.forEach(c => c.checked = !allChecked);
+};
+
+// ==========================================
+// 2. UI & PANEL MANAGEMENT
 // ==========================================
 
 function openAdminPanel() {
@@ -16,6 +102,15 @@ function openAdminPanel() {
     if (panel) {
         panel.style.display = 'block';
         if (activeSections.length === 0) addNewSection();
+        
+        // Reset checkboxes if Admin (Moderators stay locked)
+        const user = JSON.parse(localStorage.getItem('user'));
+        if (user && user.role !== 'moderator') {
+            document.querySelectorAll('#deptCheckboxContainer input').forEach(c => c.checked = false);
+        }
+
+        // 🔒 Apply Locks
+        checkScopeConstraints();
     }
 }
 
@@ -26,24 +121,31 @@ function closeAdminPanel() {
     // Clear form safely
     activeSections = [];
 
-    // Helper to safely clear value
     const clearVal = (id) => {
         const el = document.getElementById(id);
-        if (el) el.value = "";
+        if (el) {
+            el.value = "";
+            el.disabled = false; 
+        }
     };
 
     clearVal('adminCourseCode');
     clearVal('adminCourseTitle');
     clearVal('adminYear');
-    clearVal('adminInstructions');
+    clearVal('adminLevel'); // Reset Level
     clearVal('pqUpload'); 
 
-    // Safely clear innerHTML
+    // Reset Checkboxes
+    document.querySelectorAll('#deptCheckboxContainer input').forEach(c => {
+        c.checked = false;
+        c.disabled = false;
+    });
+
     const container = document.getElementById('objFieldsContainer');
-    if (container) {
-        container.innerHTML = "";
-    }
+    if (container) container.innerHTML = "";
 }
+
+// --- KEEPING YOUR TYPED QUESTION LOGIC EXACTLY AS IS ---
 function addNewSection() {
     const section = {
         id: Date.now(),
@@ -98,9 +200,8 @@ function renderAdminWorkspace() {
 window.updateSecTitle = (id, val) => { activeSections.find(s => s.id === id).title = val; };
 window.updateQText = (sid, qi, val) => { activeSections.find(s => s.id === sid).questions[qi].text = val; };
 
-
 // ==========================================
-// 3. FILE CONVERSION ENGINE (The New Part)
+// 3. FILE CONVERSION ENGINE
 // ==========================================
 const convertToBase64 = (file) => {
     return new Promise((resolve, reject) => {
@@ -112,40 +213,54 @@ const convertToBase64 = (file) => {
 };
 
 function showNotification(msg, type) {
-    showToast(msg);
+    if (window.showToast) window.showToast(msg, type);
+    else alert(msg);
 }
 
 // ==========================================
-// 4. MAIN UPLOAD LOGIC (Connected to Render)
+// 4. SECURE UPLOAD LOGIC (With Multi-Dept & JWT) 🔑
 // ==========================================
 
 async function saveNewQuestion() {
     // A. Gather Inputs
     const code = document.getElementById('adminCourseCode').value.toUpperCase().trim();
     const title = document.getElementById('adminCourseTitle').value.trim();
-    const dept = document.getElementById('adminDept').value;
     const level = document.getElementById('adminLevel').value;
     const year = document.getElementById('adminYear').value.trim();
     const semester = document.getElementById('adminSemester').value;
-    
-    // B. Validation
+
+    // B. Gather Selected Departments (The Array!)
+    const selectedDepts = Array.from(document.querySelectorAll('#deptCheckboxContainer input:checked'))
+                               .map(cb => cb.value);
+
+    // C. Validation
     if (!code || !year || !title) {
         showNotification("Please fill in Course Code, Title, and Year.", "error");
         return;
     }
+    if (selectedDepts.length === 0) {
+        showNotification("Please select at least one department.", "error");
+        return;
+    }
 
-    // C. Button UI Feedback (Safe Version)
+    // D. Get Token & User (CRITICAL)
+    const token = localStorage.getItem('token');
+    if (!token) {
+        showNotification("Session Expired. Please Login.", "error");
+        setTimeout(() => window.location.href = 'login.html', 2000);
+        return;
+    }
+
+    // E. Button UI Feedback
     const saveBtn = document.querySelector('.admin-actions .btn-primary');
     let originalText = "Save Paper";
-    
     if (saveBtn) {
         originalText = saveBtn.innerText;
-        saveBtn.innerText = "Uploading...";
+        saveBtn.innerText = "Secure Uploading...";
         saveBtn.disabled = true;
     }
 
     try {
-        // D. Handle File Upload
         const fileInput = document.getElementById('pqUpload');
         const file = fileInput ? fileInput.files[0] : null;
         
@@ -156,17 +271,16 @@ async function saveNewQuestion() {
             base64Data = await convertToBase64(file);
             fileType = file.type.includes('pdf') ? 'pdf' : 'image';
         } else {
-             // If no file, check if manual questions exist
             if(activeSections.length === 0) {
                  throw new Error("Please upload a PDF/Image OR type questions.");
             }
         }
 
-        // E. Construct Payload
+        // F. Construct Payload (With DEPARTMENTS ARRAY)
         const payload = {
             courseCode: code,
             courseTitle: title,
-            department: dept,
+            departments: selectedDepts, // 📤 SENDING ARRAY
             level: level,
             year: year,
             semester: semester,
@@ -175,38 +289,36 @@ async function saveNewQuestion() {
             sections: activeSections
         };
 
-        // F. Send to Render
+        // G. Send to Render
         const response = await fetch(API_URL, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': token 
+            },
             body: JSON.stringify(payload)
         });
 
         const result = await response.json();
 
         if (response.ok) {
-            showNotification(`Success! ${code} uploaded.`, "success");
+            showNotification(`Success! ${code} broadcasted to ${selectedDepts.length} departments.`, "success");
             closeAdminPanel();
 
-            // 🚀 THE FIX: Tell the Dashboard to Refresh!
             if (typeof window.loadPapersFromBackend === 'function') {
-                console.log("Triggering Dashboard Refresh...");
                 window.loadPapersFromBackend(); 
             } else {
-                // Fallback if the function isn't found
-                console.warn("Refresh function missing. Reloading page...");
                 setTimeout(() => location.reload(), 1000);
             }
 
         } else {
-            throw new Error(result.error || "Server rejected the data");
+            throw new Error(result.error || "Upload Rejected");
         }
 
     } catch (error) {
         console.error("Upload Error:", error);
-        showNotification("Upload Failed: " + error.message, "error");
+        showNotification("Failed: " + error.message, "error");
     } finally {
-        // Reset Button
         if (saveBtn) {
             saveBtn.innerText = originalText;
             saveBtn.disabled = false;
@@ -221,6 +333,3 @@ window.addNewSection = addNewSection;
 window.removeSection = removeSection;
 window.addQuestionToSection = addQuestionToSection;
 window.saveNewQuestion = saveNewQuestion;
-window.editPaper = (dept, level, code) => { 
-    showNotification("Edit feature coming soon to cloud version!", "info"); 
-};
