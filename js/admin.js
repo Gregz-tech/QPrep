@@ -23,16 +23,27 @@ function closeAdminPanel() {
     const panel = document.getElementById('adminPanel');
     if (panel) panel.style.display = 'none'; 
     
-    // Clear form
+    // Clear form safely
     activeSections = [];
-    document.getElementById('adminCourseCode').value = "";
-    document.getElementById('adminCourseTitle').value = "";
-    document.getElementById('adminYear').value = "";
-    document.getElementById('adminInstructions').value = "";
-    document.getElementById('pqUpload').value = ""; 
-    document.getElementById('objFieldsContainer').innerHTML = ""; // Clear UI
-}
 
+    // Helper to safely clear value
+    const clearVal = (id) => {
+        const el = document.getElementById(id);
+        if (el) el.value = "";
+    };
+
+    clearVal('adminCourseCode');
+    clearVal('adminCourseTitle');
+    clearVal('adminYear');
+    clearVal('adminInstructions');
+    clearVal('pqUpload'); 
+
+    // Safely clear innerHTML
+    const container = document.getElementById('objFieldsContainer');
+    if (container) {
+        container.innerHTML = "";
+    }
+}
 function addNewSection() {
     const section = {
         id: Date.now(),
@@ -116,7 +127,6 @@ async function saveNewQuestion() {
     const level = document.getElementById('adminLevel').value;
     const year = document.getElementById('adminYear').value.trim();
     const semester = document.getElementById('adminSemester').value;
-    const instructions = document.getElementById('adminInstructions').value.trim();
     
     // B. Validation
     if (!code || !year || !title) {
@@ -124,32 +134,35 @@ async function saveNewQuestion() {
         return;
     }
 
-    // C. Button UI Feedback
-    const saveBtn = document.querySelector('.btn-primary'); // Assumes the Save button is the first .btn-primary
-    const originalText = saveBtn.innerText;
-    saveBtn.innerText = "Uploading to Cloud...";
-    saveBtn.disabled = true;
+    // C. Button UI Feedback (Safe Version)
+    const saveBtn = document.querySelector('.admin-actions .btn-primary');
+    let originalText = "Save Paper";
+    
+    if (saveBtn) {
+        originalText = saveBtn.innerText;
+        saveBtn.innerText = "Uploading...";
+        saveBtn.disabled = true;
+    }
 
     try {
-        // D. Handle File Upload (The Priority)
+        // D. Handle File Upload
         const fileInput = document.getElementById('pqUpload');
-        const file = fileInput.files[0]; // We only take the FIRST file for now
+        const file = fileInput ? fileInput.files[0] : null;
         
         let base64Data = "";
-        let fileType = "image"; // Default
+        let fileType = "image"; 
 
         if (file) {
             base64Data = await convertToBase64(file);
             fileType = file.type.includes('pdf') ? 'pdf' : 'image';
         } else {
-            // Check if they typed questions manually? 
-            // For now, we REQUIRE a file for simplicity, or send empty string
+             // If no file, check if manual questions exist
             if(activeSections.length === 0) {
                  throw new Error("Please upload a PDF/Image OR type questions.");
             }
         }
 
-        // E. Construct Payload (Matches Backend Schema)
+        // E. Construct Payload
         const payload = {
             courseCode: code,
             courseTitle: title,
@@ -158,13 +171,11 @@ async function saveNewQuestion() {
             year: year,
             semester: semester,
             type: fileType, 
-            fileData: base64Data, // This is the actual PDF/Image
-            sections: activeSections // Optional: Sent if backend supports it later
+            fileData: base64Data, 
+            sections: activeSections
         };
 
         // F. Send to Render
-        console.log("Sending Payload:", payload); // Debugging
-        
         const response = await fetch(API_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -174,9 +185,19 @@ async function saveNewQuestion() {
         const result = await response.json();
 
         if (response.ok) {
-            showNotification(`Success! ${code} has been uploaded to the database.`, "success");
+            showNotification(`Success! ${code} uploaded.`, "success");
             closeAdminPanel();
-            // location.reload(); // Optional: Reload to see changes
+
+            // 🚀 THE FIX: Tell the Dashboard to Refresh!
+            if (typeof window.loadPapersFromBackend === 'function') {
+                console.log("Triggering Dashboard Refresh...");
+                window.loadPapersFromBackend(); 
+            } else {
+                // Fallback if the function isn't found
+                console.warn("Refresh function missing. Reloading page...");
+                setTimeout(() => location.reload(), 1000);
+            }
+
         } else {
             throw new Error(result.error || "Server rejected the data");
         }
@@ -186,8 +207,10 @@ async function saveNewQuestion() {
         showNotification("Upload Failed: " + error.message, "error");
     } finally {
         // Reset Button
-        saveBtn.innerText = originalText;
-        saveBtn.disabled = false;
+        if (saveBtn) {
+            saveBtn.innerText = originalText;
+            saveBtn.disabled = false;
+        }
     }
 }
 
