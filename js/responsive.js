@@ -162,13 +162,13 @@ renderDashboard = function() {
 // };
 
 // Update the auth modal for mobile
-const originalHandleAuth = handleAuth;
-handleAuth = function(e) {
-    originalHandleAuth(e);
-    if (user) {
-        closeMobileSidebar(); // Close mobile sidebar if open
-    }
-};
+// const originalHandleAuth = handleAuth;
+// handleAuth = function(e) {
+//     originalHandleAuth(e);
+//     if (user) {
+//         closeMobileSidebar(); // Close mobile sidebar if open
+//     }
+// };
 
 // Make sure modals are responsive
 function makeModalsResponsive() {

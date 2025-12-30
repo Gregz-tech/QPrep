@@ -29,12 +29,12 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Ensure the form actually triggers the handleAuth function
-document.addEventListener('DOMContentLoaded', () => {
-    const form = document.getElementById('registrationForm');
-    if (form) {
-        form.addEventListener('submit', handleAuth);
-    }
-});
+// document.addEventListener('DOMContentLoaded', () => {
+//     const form = document.getElementById('registrationForm');
+//     if (form) {
+//         form.addEventListener('submit', handleAuth);
+//     }
+// });
 
 document.addEventListener('DOMContentLoaded', () => {
     renderDashboard();
