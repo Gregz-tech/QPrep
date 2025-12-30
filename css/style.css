@@ -1605,17 +1605,23 @@ body {
     border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-/* --- TOAST CONTAINER --- */
+/* --- TOAST CONTAINER (CENTERED) --- */
 #toast-container {
     position: fixed;
     top: 20px;
-    right: 20px;
+    left: 50%;                 /* Move to middle of screen */
+    transform: translateX(-50%); /* Perfectly center align it */
     z-index: 10000;
     display: flex;
     flex-direction: column;
     gap: 15px;
+    align-items: center;       /* Ensure toasts stack in center */
 }
 
+/* Optional: Make them slightly wider for the center look */
+.toast {
+    min-width: 350px; 
+}
 /* --- THE NOTIFICATION CARD --- */
 .toast {
     min-width: 300px;
@@ -1659,13 +1665,17 @@ body {
 @keyframes slideOut {
     to { opacity: 0; transform: translateX(100%); }
 }
-
 /* --- MOBILE RESPONSIVENESS --- */
 @media (max-width: 600px) {
     #toast-container {
-        right: 50%;
-        transform: translateX(50%); /* Center it */
-        width: 90%;
+        /* No need to center again, the main code does it! */
+        width: 90%;       /* Make it fit nicely on small screens */
+        top: 10px;        /* Slightly less padding on top for mobile */
     }
-    .toast { width: 100%; }
+    
+    .toast { 
+        width: 100%;      /* Fill the container */
+        min-width: auto;  /* Remove the minimum width limit */
+    }
 }
+

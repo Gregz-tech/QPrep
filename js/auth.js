@@ -1,6 +1,8 @@
-// CONFIGURATION
-// const API_URL = 'http://localhost:5000/api/auth'; 
+// ================================================================
+//  CONFIGURATION
+// ================================================================
 
+// Use your live backend URL
 const API_URL = 'https://qprep-backend-1.onrender.com/api/auth';
 
 const mainCard = document.getElementById('mainCard');
@@ -9,7 +11,6 @@ const triggerSignIn = document.getElementById('triggerSignIn');
 
 // --- 1. FLIP ANIMATION TOGGLE ---
 // Simple: Just toggle the 'is-flipped' class on the card container.
-// CSS handles the actual 3D rotation.
 triggerSignUp.addEventListener('click', (e) => {
     e.preventDefault();
     mainCard.classList.add("is-flipped");
@@ -22,7 +23,7 @@ triggerSignIn.addEventListener('click', (e) => {
 
 
 // ================================================================
-//  API & FORM LOGIC (Unchanged from previous version)
+//  API & FORM LOGIC
 // ================================================================
 
 // --- 2. API HELPER FUNCTION ---
@@ -52,6 +53,8 @@ async function sendAuthRequest(endpoint, data, btnId, originalText) {
             btn.style.opacity = "1";
             btn.disabled = false;
             btn.style.cursor = 'pointer';
+            
+            // ✅ USE TOAST FOR ERROR
             showToast(result.error || "An error occurred. Please check your inputs.", "error");
             return { success: false };
         }
@@ -62,10 +65,11 @@ async function sendAuthRequest(endpoint, data, btnId, originalText) {
         btn.style.opacity = "1";
         btn.disabled = false;
         btn.style.cursor = 'pointer';
+        
+        // ✅ USE TOAST FOR NETWORK ERROR
         showToast("Cannot connect to server. Check internet connection.", "error");
         return { success: false };
     }
-    // Note: Success state reset is handled in the calling functions upon successful redirect/flip
 }
 
 // --- 3. HANDLE REGISTRATION ---
@@ -89,9 +93,12 @@ document.getElementById('registerForm').addEventListener('submit', async (e) => 
     const result = await sendAuthRequest('register', formData, 'regBtn', 'Register');
 
     if (result.success) {
+        // ✅ USE TOAST FOR SUCCESS (Replaces alert)
         showToast("Registration Successful! Please sign in.", "success");
+
         // Flip back to login side automatically
         mainCard.classList.remove("is-flipped");
+        
         // Clear form & reset button
         document.getElementById('registerForm').reset();
         const btn = document.getElementById('regBtn');
@@ -119,12 +126,16 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     const result = await sendAuthRequest('login', formData, 'loginBtn', 'Enter Portal');
 
     if (result.success) {
+        // ✅ ADDED SUCCESS TOAST
+        showToast("Login Successful! Redirecting...", "success");
+
         // 1. Save user token/data to Browser Memory
         localStorage.setItem('user', JSON.stringify(result.data));
         
-        // 2. Redirect to Dashboard
-        console.log("Login Success:", result.data);
-        window.location.href = 'index.html';
+        // 2. Redirect to Dashboard (Small delay to let user see the toast)
+        setTimeout(() => {
+            window.location.href = 'index.html';
+        }, 1000);
     }
 });
 
@@ -136,5 +147,3 @@ window.addEventListener('DOMContentLoaded', () => {
        // window.location.href = 'index.html'; 
     }
 });
-
-

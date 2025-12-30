@@ -45,13 +45,13 @@
     
     <aside class="sidebar-mobile glass" id="mobileSidebar">
         <div class="mobile-sidebar-header">
-            <div class="mobile-sidebar-user">
+          <div class="mobile-sidebar-user">
                 <div class="mobile-avatar-circle">
                     <i class="fas fa-user-graduate"></i>
                 </div>
                 <div>
-                    <h4 id="mobileUserName">User Name</h4>
-                    <p id="mobileUserInfo">ITH • 300L</p>
+                    <h4 id="mobileRealName">Loading...</h4>
+                    <p id="mobileRealInfo">...</p>
                 </div>
                 <button class="mobile-sidebar-close" id="mobileSidebarClose">
                     <i class="fas fa-times"></i>
@@ -154,39 +154,55 @@
     </div>
 
     <div class="app-container">
-        <aside class="sidebar glass">
-            <div class="logo"><i class="fas fa-graduation-cap"></i> <span>QPrep</span></div>
+      <aside class="sidebar glass" style="display: flex; flex-direction: column; justify-content: space-between; height: 100vh;">
+        <div>
+            <div class="logo">
+                <i class="fas fa-graduation-cap"></i> <span>QPrep</span>
+            </div>
+            
             <nav class="nav-menu">
                 <a href="#" class="nav-item active"><i class="fas fa-th-large"></i> Dashboard</a>
                 
                 <div class="nav-label">Archive</div>
-                        <div class="archive-dropdown glass-input" style="margin: 0 15px; border-radius: 12px; overflow: hidden;">
-                            <div class="archive-header" onclick="toggleArchiveMenu()" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; cursor: pointer;">
-                                <span><i class="fas fa-archive"></i> My Archive</span>
-                                <i class="fas fa-chevron-down" id="archiveIcon"></i>
-                            </div>
-                            <div id="archiveLevels" style="display: none; background: rgba(0,0,0,0.2); border-top: 1px solid var(--glass-border);">
-                                <a href="#" class="nav-item" onclick="viewArchiveLevel('100')">100 Level</a>
-                                <a href="#" class="nav-item" onclick="viewArchiveLevel('200')">200 Level</a>
-                                <a href="#" class="nav-item" onclick="viewArchiveLevel('300')">300 Level</a>
-                                <a href="#" class="nav-item" onclick="viewArchiveLevel('400')">400 Level</a>
-                                <a href="#" class="nav-item" onclick="viewArchiveLevel('500')">500 Level</a>
-                            </div>
-                        </div>
-                  <div id="adminOnlyNav" style="display: none; margin-top: 20px;">
-    <div class="nav-label" style="font-size: 0.8rem; opacity: 0.6; margin-bottom: 10px;">MANAGEMENT</div>
-    
-    <a href="javascript:void(0)" class="nav-item" onclick="openAdminPanel()">
-        <i class="fas fa-plus-circle"></i>
-        <span>Add Questions</span>
-    </a>
-</div>
+                <div class="archive-dropdown glass-input" style="margin: 0 15px; border-radius: 12px; overflow: hidden;">
+                    <div class="archive-header" onclick="toggleArchiveMenu()" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; cursor: pointer;">
+                        <span><i class="fas fa-archive"></i> My Archive</span>
+                        <i class="fas fa-chevron-down" id="archiveIcon"></i>
+                    </div>
+                    <div id="archiveLevels" style="display: none; background: rgba(0,0,0,0.2); border-top: 1px solid var(--glass-border);">
+                        <a href="#" class="nav-item" onclick="viewArchiveLevel('100')">100 Level</a>
+                        <a href="#" class="nav-item" onclick="viewArchiveLevel('200')">200 Level</a>
+                        <a href="#" class="nav-item" onclick="viewArchiveLevel('300')">300 Level</a>
+                        <a href="#" class="nav-item" onclick="viewArchiveLevel('400')">400 Level</a>
+                        <a href="#" class="nav-item" onclick="viewArchiveLevel('500')">500 Level</a>
+                    </div>
+                </div>
+                
+                <div id="adminOnlyNav" style="display: none; margin-top: 20px;">
+                    <div class="nav-label" style="font-size: 0.8rem; opacity: 0.6; margin-bottom: 10px;">MANAGEMENT</div>
+                    <a href="javascript:void(0)" class="nav-item" onclick="openAdminPanel()">
+                        <i class="fas fa-plus-circle"></i>
+                        <span>Add Questions</span>
+                    </a>
+                </div>
             </nav>
-            <div class="sidebar-footer" id="sidebarFooter">
-                <div class="level-manager glass">
-                   </div>
+        </div>
+
+        <div class="desktop-user-profile" style="margin-top: auto; padding: 20px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; gap: 12px;">
+            <div style="width: 40px; height: 40px; background: rgba(255,255,255,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
+                <i class="fas fa-user-graduate" style="color: #fff;"></i>
             </div>
-        </aside>
+            
+            <div style="flex: 1; overflow: hidden;">
+                <h4 id="profileName" style="margin: 0; font-size: 0.95rem; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Student</h4>
+                <p id="profileInfo" style="margin: 0; font-size: 0.75rem; color: rgba(255,255,255,0.7);">ITH • 300L</p>
+            </div>
+
+            <button onclick="logoutUser()" title="Logout" style="background: none; border: none; color: #ff4757; cursor: pointer; padding: 8px; border-radius: 8px; transition: background 0.2s;">
+                <i class="fas fa-sign-out-alt"></i>
+            </button>
+        </div>
+    </aside>
 
         <main class="main-content">
             <header class="top-nav glass">
@@ -275,12 +291,12 @@
                  <div class="admin-actions">
     <button type="button" onclick="saveNewQuestion()" class="btn-primary">Save Paper</button>
     <button type="button" onclick="clearStorage()" class="btn-primary danger" style="width: auto; margin-left: 10px;">
-        <i class="fas fa-trash-alt"></i> Reset Bank
+        <i class="fas fa-trash-alt"></i>
     </button>
     <button type="button" onclick="closeAdminPanel()" class="btn-secondary">Cancel</button>
 </div>
                 <div class="admin-workspace glass">
-                    <div id="objFieldsContainer"></div>
+                    <!-- <div id="objFieldsContainer"></div> -->
                 </div>
             </div>
         </div>

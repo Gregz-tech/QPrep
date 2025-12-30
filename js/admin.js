@@ -174,7 +174,7 @@ async function saveNewQuestion() {
         const result = await response.json();
 
         if (response.ok) {
-            showNotification(`✅ Success! ${code} has been uploaded to the database.`, "success");
+            showNotification(`Success! ${code} has been uploaded to the database.`, "success");
             closeAdminPanel();
             // location.reload(); // Optional: Reload to see changes
         } else {

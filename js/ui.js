@@ -12,26 +12,34 @@ document.addEventListener('DOMContentLoaded', () => {
     // A. CHECK AUTHENTICATION
     const storedUser = localStorage.getItem('user');
     
-    if (!storedUser) {
+    // SAFETY VALVE: Don't run this check if we are already on the login page!
+    const isLoginPage = window.location.pathname.includes('login.html');
+
+    if (!storedUser && !isLoginPage) {
         console.warn("No user found. Redirecting to login.");
         window.location.href = 'login.html'; 
         return;
     }
+    
+    // Stop the script here if we are on login.html (no need to load papers)
+    if (isLoginPage) return; 
 
+    // ... The rest of your code (B, C, D) continues below ...
+    
     // B. LOAD USER DATA
     window.user = JSON.parse(storedUser);
     console.log("Authorized User:", window.user);
 
-    // C. UPDATE UI WITH REAL NAME
-    updateProfileUI();
+    // C. UPDATE UI WITH REAL NAME (Now calls the fixed function below)
+    if (typeof updateProfileUI === 'function') updateProfileUI();
 
     // D. START APP
-    loadPapersFromBackend(); 
-    setupSearchFeature();
+    if (typeof loadPapersFromBackend === 'function') loadPapersFromBackend(); 
+    if (typeof setupSearchFeature === 'function') setupSearchFeature();
 });
 
 // ==========================================
-// 2. DATA LOADING (The Fix is Here!)
+// 2. DATA LOADING
 // ==========================================
 async function loadPapersFromBackend() {
     try {
@@ -136,12 +144,6 @@ function renderCourseGridBySemester(semester) {
     
     const container = document.getElementById('questionsGrid');
     
-    // --- DEBUGGING: Let's see what the app sees ---
-    console.log("Logged in User:", window.user.dept, window.user.level);
-    console.log("Available Depts in Bank:", Object.keys(window.questionBank));
-    // ---------------------------------------------
-
-    // 1. ROBUST DEPT CHECK
     const userDept = window.user.dept; 
     const deptData = questionBank[userDept];
 
@@ -153,12 +155,9 @@ function renderCourseGridBySemester(semester) {
         return;
     }
 
-    // 2. ROBUST LEVEL CHECK (Handles "300" vs "300L")
-    // We try to find the key that starts with the user's level number
+    // ROBUST LEVEL CHECK (Matches "300" to "300" or "300L")
     const availableLevels = Object.keys(deptData);
-    const userLevelClean = window.user.level.replace(/\D/g, ''); // Turns "300L" into "300"
-    
-    // Find a match in the database (e.g., matches "300" to "300" or "300L")
+    const userLevelClean = window.user.level.replace(/\D/g, ''); 
     const matchedLevelKey = availableLevels.find(k => k.replace(/\D/g, '') === userLevelClean);
 
     if (!matchedLevelKey) {
@@ -171,13 +170,12 @@ function renderCourseGridBySemester(semester) {
 
     const levelData = deptData[matchedLevelKey];
 
-    // 3. FILTER BY SEMESTER
+    // FILTER BY SEMESTER
     const filteredCodes = Object.keys(levelData).filter(code => {
         const course = levelData[code];
         const years = course.data || {};
         
         return Object.values(years).some(yearData => {
-            // Check strictly or loosely (e.g. "First" matches "First Semester")
             const val = JSON.stringify(yearData).toLowerCase(); 
             return val.includes(semester.toLowerCase());
         });
@@ -190,7 +188,7 @@ function renderCourseGridBySemester(semester) {
         return;
     }
 
-    // 4. RENDER
+    // RENDER
     container.innerHTML = filteredCodes.map(code => `
         <div class="stat-card glass" onclick="openYearPicker('${code}', '${semester}', '${matchedLevelKey}')" style="cursor:pointer;">
             <div class="icon-box blue"><i class="fas fa-book"></i></div>
@@ -203,7 +201,7 @@ function renderCourseGridBySemester(semester) {
 }
 
 // ==========================================
-// 5. VIEWER & MODALS (Updated for Cloud Data)
+// 5. VIEWER & MODALS
 // ==========================================
 
 function openYearPicker(code, semester, overrideLevel) {
@@ -220,7 +218,6 @@ function openYearPicker(code, semester, overrideLevel) {
                 <option value="">-- Choose Academic Year --</option>
     `;
     
-    // Sort years descending
     const years = Object.keys(courseData.data).sort().reverse();
     
     years.forEach(year => {
@@ -241,22 +238,18 @@ function loadPaperFromDropdown(code, semester, year, level) {
     const paper = questionBank[user.dept][activeLevel][code].data[year][semester];
     const displayArea = document.getElementById('paperContentArea');
     
-    // --- NEW VIEWER LOGIC FOR CLOUD DATA ---
     let htmlContent = "";
 
     if (paper.fileData) {
-        // Handle Cloud File (Single Base64 String)
         if (paper.type === 'pdf' || paper.fileData.startsWith('data:application/pdf')) {
             htmlContent = `<iframe src="${paper.fileData}" width="100%" height="600px" style="border:none; border-radius:10px; background:white;"></iframe>`;
         } else {
             htmlContent = `<img src="${paper.fileData}" style="width:100%; border-radius:10px; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">`;
         }
     } else {
-        // Fallback for any old data format
         htmlContent = "<p>Error: File data is missing or corrupted.</p>";
     }
 
-    // If Sections exist (Text based questions)
     if (paper.sections && paper.sections.length > 0) {
         htmlContent += paper.sections.map(sec => `
             <div style="margin-top: 30px; padding: 20px; background: rgba(0,0,0,0.2); border-radius: 10px;">
@@ -275,10 +268,9 @@ window.closeViewer = () => {
 };
 
 // ==========================================
-// 6. ADMIN HIERARCHY (For Management)
+// 6. ADMIN HIERARCHY
 // ==========================================
 function renderAdminManagementHierarchy(container) {
-    // 1. ADD BUTTON
     let html = `
         <div class="admin-quick-actions" style="margin-bottom: 30px;">
             <button onclick="openAdminPanel()" class="glass" style="width: 100%; padding: 20px; display: flex; align-items: center; justify-content: center; gap: 15px; border: 2px dashed rgba(59, 130, 246, 0.5); cursor: pointer; background: rgba(59, 130, 246, 0.1);">
@@ -293,14 +285,12 @@ function renderAdminManagementHierarchy(container) {
         </div>
     `;
 
-    // 2. CHECK EMPTY
     if (Object.keys(questionBank).length === 0) {
         html += `<div class="empty-state glass"><p>No data loaded from cloud.</p></div>`;
         container.innerHTML = html;
         return;
     }
 
-    // 3. TREE VIEW
     html += `<h3 style="margin-bottom: 15px;">Existing Papers</h3>`;
     for (const dept in questionBank) {
         const safeId = dept.replace(/\s+/g, '-');
@@ -341,7 +331,6 @@ function renderAdminCourseItems(dept, level, semester) {
     
     for (const code in courses) {
         for (const year in courses[code].data) {
-            // Check if this year has the requested semester
             if (courses[code].data[year][semester]) {
                 const paper = courses[code].data[year][semester];
                 const paperId = paper._id || "unknown"; 
@@ -386,17 +375,58 @@ window.toggleHierarchy = function(id) {
     if(el) el.style.display = (el.style.display === "none" || el.style.display === "") ? "block" : "none";
 };
 
-// Update Sidebar UI
+// ==========================================
+// ✅ UPDATED PERSONALIZATION ENGINE (Desktop & Mobile)
+// ==========================================
 function updateProfileUI() {
-    const profileNameEl = document.querySelector('.profile-info h4');
-    if (profileNameEl && window.user) profileNameEl.innerText = `${window.user.firstName || window.user.name}`;
-    
-    const profileRoleEl = document.querySelector('.profile-info p');
-    if (profileRoleEl && window.user) profileRoleEl.innerText = `${window.user.dept} ${window.user.level}L • ${window.user.role.toUpperCase()}`;
+    console.log("updateProfileUI running..."); // Debug check
+
+    const user = JSON.parse(localStorage.getItem('user'));
+
+    if (user) {
+        // Helper to capitalize: "greg" -> "Greg"
+        const username = user.username 
+            ? user.username.charAt(0).toUpperCase() + user.username.slice(1)
+            : "Student";
+            
+        const details = `${user.dept} • ${user.level}`;
+
+        console.log("User found:", username); // Debug check
+
+        // --- 1. UPDATE DESKTOP SIDEBAR ---
+        const deskName = document.getElementById('profileName');
+        const deskInfo = document.getElementById('profileInfo');
+
+        if (deskName) deskName.innerText = username;
+        if (deskInfo) deskInfo.innerText = details;
+
+        // --- 2. UPDATE MOBILE SIDEBAR (New IDs!) ---
+        const mobileName = document.getElementById('mobileRealName');
+        const mobileInfo = document.getElementById('mobileRealInfo');
+
+        if (mobileName) {
+            mobileName.innerText = username;
+            console.log("Mobile Name Updated");
+        } else {
+            console.warn("Could not find element #mobileRealName");
+        }
+
+        if (mobileInfo) mobileInfo.innerText = details;
+        
+        // --- 3. SHOW ADMIN BUTTONS (If Admin) ---
+        if (user.role === 'admin') {
+            const adminNav = document.getElementById('adminOnlyNav');
+            const mobileAdmin = document.getElementById('mobileAdminOnlyNav');
+            
+            if (adminNav) adminNav.style.display = 'block';
+            if (mobileAdmin) mobileAdmin.style.display = 'block';
+        }
+    }
 }
+window.updateProfileUI = updateProfileUI;
 
 function showNotification(message, type = 'success') {
-    showToast(message);
+    showToast(message, type);
 }
 
 // Search
@@ -412,7 +442,6 @@ function setupSearchFeature() {
 // 1. Trigger the Modal (Attached to your Logout button)
 window.logoutUser = function() {
     const modal = document.getElementById('confirmModal');
-    
     // Show your custom modal
     modal.style.display = 'flex'; 
 
@@ -432,14 +461,192 @@ window.closeConfirmModal = function() {
     const modal = document.getElementById('confirmModal');
     modal.style.display = 'none';
 };
-// Archive Toggle
-window.toggleArchiveMenu = function() {
-    const desktopMenu = document.querySelector('.sidebar #archiveLevels');
-    if(desktopMenu) desktopMenu.style.display = (desktopMenu.style.display === "none" || desktopMenu.style.display === "") ? "block" : "none";
+
+// ==========================================
+// 8. ARCHIVE SYSTEM (The "Semester-First" Flow) 🏛️
+// ==========================================
+window.viewArchiveLevel = function(level) {
+    // 1. AGGRESSIVE MOBILE CLOSER
+    // This forces the sidebar and the blurry overlay to close instantly
+    const mobileSidebar = document.getElementById('mobileSidebar');
+    const overlay = document.getElementById('mobileOverlay');
+    
+    if (mobileSidebar) {
+        mobileSidebar.classList.remove('active');
+    }
+    
+    if (overlay) {
+        overlay.classList.remove('active');
+        // FORCE HIDE: Instantly remove it from the screen so it can't blur the content
+        overlay.style.display = 'none';
+        
+        // Reset it after 50ms so it works next time you open the menu
+        setTimeout(() => {
+            overlay.style.display = ''; 
+        }, 50);
+    }
+
+    // 2. Setup UI
+    const grid = document.getElementById('questionsGrid');
+    const heading = document.getElementById('courseHeading');
+    
+    // 3. Update Heading
+    heading.innerHTML = `
+        <button onclick="renderDashboard()" class="btn-icon" style="margin-right:10px; background:none; border:none; color:white; cursor:pointer;">
+            <i class="fas fa-arrow-left"></i>
+        </button>
+        ARCHIVE: ${level} LEVEL
+    `;
+
+    // 4. Render Two Big Buttons (Semester Selection)
+    grid.innerHTML = `
+        <div class="semester-select-container" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width: 100%;">
+            <div class="stat-card glass" onclick="renderArchiveSemesterGrid('${level}', 'First')" style="cursor: pointer; flex-direction: column; text-align: center; padding: 40px; border: 1px solid var(--glass-border);">
+                <div class="icon-box blue" style="margin: 0 auto 15px auto; background: rgba(59, 130, 246, 0.2); color: #60a5fa;"><i class="fas fa-snowflake"></i></div>
+                <h3>FIRST SEMESTER</h3>
+                <p>View ${level}L Papers</p>
+            </div>
+            
+            <div class="stat-card glass" onclick="renderArchiveSemesterGrid('${level}', 'Second')" style="cursor: pointer; flex-direction: column; text-align: center; padding: 40px; border: 1px solid var(--glass-border);">
+                <div class="icon-box orange" style="margin: 0 auto 15px auto; background: rgba(245, 158, 11, 0.2); color: #fbbf24;"><i class="fas fa-sun"></i></div>
+                <h3>SECOND SEMESTER</h3>
+                <p>View ${level}L Papers</p>
+            </div>
+        </div>
+    `;
 };
 
-window.viewArchiveLevel = function(level) {
-    showToast(`Archive for ${level}L coming soon!`, "error");
+// STEP B: COURSE LIST - Filtered by Level & Semester
+window.renderArchiveSemesterGrid = function(level, semester) {
+    const grid = document.getElementById('questionsGrid');
+    const heading = document.getElementById('courseHeading');
+    const dept = window.user.dept;
+
+    // 1. Update Heading (Back button goes to Level View)
+    heading.innerHTML = `
+        <button onclick="viewArchiveLevel('${level}')" class="btn-icon" style="margin-right:10px; background:none; border:none; color:white; cursor:pointer;">
+            <i class="fas fa-arrow-left"></i>
+        </button>
+        ${level}L • ${semester.toUpperCase()} SEMESTER
+    `;
+
+    // 2. Data Lookup (CRITICAL FIX: Uses 'level' arg, NOT user.level)
+    if (!window.questionBank[dept] || !window.questionBank[dept][level]) {
+        grid.innerHTML = `<div class="empty-state glass"><p>No archive data found for ${dept} ${level}L.</p></div>`;
+        return;
+    }
+
+    const levelData = window.questionBank[dept][level];
+    
+    // 3. Filter Courses (Must have data for this specific semester)
+    const courses = Object.keys(levelData).filter(code => {
+        const years = levelData[code].data;
+        // Check if ANY year has data for this semester
+        return Object.values(years).some(yearData => yearData[semester]);
+    });
+
+    if (courses.length === 0) {
+        grid.innerHTML = `<div class="empty-state glass"><p>No courses found for ${semester} Semester.</p></div>`;
+        return;
+    }
+
+    // 4. Render Course Cards (Gold Style)
+    grid.innerHTML = courses.map(code => `
+        <div class="stat-card glass" onclick="openArchivePaperModal('${code}', '${level}', '${semester}')" style="cursor:pointer; border-left: 4px solid #ffd700;">
+            <div class="icon-box" style="background: rgba(255, 215, 0, 0.2); color: #ffd700;"><i class="fas fa-history"></i></div>
+            <div>
+                <h3>${code}</h3>
+                <p>${levelData[code].name}</p>
+            </div>
+        </div>
+    `).join('');
+};
+
+// STEP C: VIEWER - Pick a Year
+window.openArchivePaperModal = function(code, level, semester) {
+    const courseData = window.questionBank[window.user.dept][level][code];
+    const container = document.getElementById('objContainer');
+    
+    let html = `
+        <div style="padding: 20px;">
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+                <span style="background:#ffd700; color:black; padding:2px 8px; border-radius:4px; font-size:0.7rem; font-weight:bold;">ARCHIVE</span>
+                <h3 class="accent-text" style="color: #fff; margin:0;">${code}</h3>
+            </div>
+            <p style="margin-bottom: 20px; opacity: 0.8;">${semester} Semester • Select Session</p>
+            
+            <select id="archivePicker" class="glass-input" style="width:100%; padding:12px; border-radius:10px;" 
+                onchange="loadPaperFromDropdown('${code}', '${semester}', this.value, '${level}')">
+                <option value="">-- Choose Academic Year --</option>
+    `;
+
+    // Sort years descending
+    const years = Object.keys(courseData.data).sort().reverse();
+
+    years.forEach(year => {
+        // Only show years that actually have this semester!
+        if (courseData.data[year][semester]) {
+            html += `<option value="${year}">${year}</option>`;
+        }
+    });
+
+    html += `</select><div id="paperContentArea" style="margin-top: 30px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;"></div></div>`;
+
+    container.innerHTML = html;
+    document.getElementById('viewCourseCode').innerText = "Archive Reader";
+    document.getElementById('paperViewer').style.display = 'block';
+    document.body.style.overflow = 'hidden';
+};
+
+// B. ARCHIVE VIEWER: Shows All Semesters
+window.openArchiveYearPicker = function(code, level) {
+    const courseData = window.questionBank[window.user.dept][level][code];
+    const container = document.getElementById('objContainer');
+    
+    let html = `
+        <div style="padding: 20px;">
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+                <span style="background:#ffd700; color:black; padding:2px 8px; border-radius:4px; font-size:0.7rem; font-weight:bold;">ARCHIVE</span>
+                <h3 class="accent-text" style="color: #fff; margin:0;">${code}</h3>
+            </div>
+            <p style="margin-bottom: 20px; opacity: 0.8;">${courseData.name}</p>
+            
+            <select id="archivePicker" class="glass-input" style="width:100%; padding:12px; border-radius:10px;" 
+                onchange="loadArchivePaper('${code}', '${level}', this.value)">
+                <option value="">-- Select a Past Session --</option>
+    `;
+
+    // Sort years descending (Newest first)
+    const years = Object.keys(courseData.data).sort().reverse();
+
+    years.forEach(year => {
+        // Add First Semester Option
+        if (courseData.data[year]['First']) {
+            html += `<option value="${year}|First">📂 ${year} - First Semester</option>`;
+        }
+        // Add Second Semester Option
+        if (courseData.data[year]['Second']) {
+            html += `<option value="${year}|Second">📂 ${year} - Second Semester</option>`;
+        }
+    });
+
+    html += `</select><div id="paperContentArea" style="margin-top: 30px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;"></div></div>`;
+
+    container.innerHTML = html;
+    document.getElementById('viewCourseCode').innerText = "Archive Repository";
+    document.getElementById('paperViewer').style.display = 'block';
+    document.body.style.overflow = 'hidden';
+};
+
+// C. LOADER: Bridges the gap to the existing viewer
+window.loadArchivePaper = function(code, level, value) {
+    if (!value) return;
+    
+    // Split the value "2023|First" into two parts
+    const [year, semester] = value.split('|');
+    
+    // Reuse your existing powerful loader!
+    loadPaperFromDropdown(code, semester, year, level);
 };
 
 // --- TOAST NOTIFICATION ENGINE ---
@@ -476,3 +683,53 @@ function showToast(message, type = 'info') {
 
 // Make it global so you can call it from anywhere
 window.showToast = showToast;
+
+// ==========================================
+// 9. MOBILE SPECIFIC FIXES 📱
+// ==========================================
+
+// ==========================================
+// 9. UNIVERSAL ARCHIVE TOGGLE (Fixes Mobile & Desktop) 🔧
+// ==========================================
+
+// We assign the SAME logic to both function names.
+// This ensures it works regardless of what your HTML 'onclick' says.
+window.toggleArchiveMenu = toggleSmartArchive;
+window.toggleMobileArchive = toggleSmartArchive;
+
+function toggleSmartArchive() {
+    // 1. Try to find the Desktop Dropdown
+    const desktopMenu = document.querySelector('.sidebar #archiveLevels');
+    
+    // 2. Try to find the Mobile Dropdown (Check both possible IDs to be safe)
+    const mobileMenu = document.getElementById('mobileArchiveLevels') || 
+                       document.querySelector('#mobileSidebar .archive-dropdown #archiveLevels');
+
+    // 3. LOGIC: If Mobile Sidebar is active, toggle Mobile Menu. Otherwise, toggle Desktop.
+    const mobileSidebar = document.getElementById('mobileSidebar');
+    const isMobileOpen = mobileSidebar && mobileSidebar.classList.contains('active'); // Or check display style
+
+    // Simple Check: If we can see the mobile sidebar, we toggle the mobile menu
+    if (window.innerWidth <= 768 || (mobileSidebar && getComputedStyle(mobileSidebar).left === "0px")) {
+        if (mobileMenu) {
+            toggleElement(mobileMenu);
+        } else {
+            console.warn("Mobile Archive Menu not found in HTML");
+        }
+    } else {
+        // We are on Desktop
+        if (desktopMenu) {
+            toggleElement(desktopMenu);
+        }
+    }
+}
+
+// Helper to switch Open/Close
+function toggleElement(el) {
+    if (el.style.display === "none" || el.style.display === "") {
+        el.style.display = "block";
+    } else {
+        el.style.display = "none";
+    }
+}
+
