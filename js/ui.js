@@ -200,73 +200,102 @@ function renderCourseGridBySemester(semester) {
     `).join('');
 }
 
-// ==========================================
-// 5. VIEWER & MODALS
-// ==========================================
 
-function openYearPicker(code, semester, overrideLevel) {
-    const activeLevel = overrideLevel || user.level;
-    const courseData = questionBank[user.dept][activeLevel][code];
-    const container = document.getElementById('objContainer');
-    
-    let html = `
-        <div style="padding: 20px;">
-            <h3 class="accent-text" style="margin-bottom: 10px; color: #3b82f6;">${code}: ${courseData.name}</h3>
-            <p style="margin-bottom: 20px; opacity: 0.8;">${semester} Semester</p>
-            <select id="sessionPickerDropdown" class="glass-input" style="width:100%; padding:12px; border-radius:10px;" 
-                onchange="loadPaperFromDropdown('${code}', '${semester}', this.value, '${activeLevel}')">
-                <option value="">-- Choose Academic Year --</option>
-    `;
-    
-    const years = Object.keys(courseData.data).sort().reverse();
-    
-    years.forEach(year => {
-        if (courseData.data[year][semester]) html += `<option value="${year}">${year}</option>`;
-    });
-    
-    html += `</select><div id="paperContentArea" style="margin-top: 30px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;"></div></div>`;
-    
-    container.innerHTML = html;
-    document.getElementById('viewCourseCode').innerText = "Session Filter";
-    document.getElementById('paperViewer').style.display = 'block';
-    document.body.style.overflow = 'hidden';
-}
+async function loadPaperFromDropdown(code, semester, year, level) {
+    console.log("1. Starting Load...", {code, semester, year}); // DEBUG
 
-function loadPaperFromDropdown(code, semester, year, level) {
     if(!year) return;
+    
     const activeLevel = level || user.level;
+    
+    // Safety Check: Does the user have a department?
+    if (!user.dept) {
+        alert("Session Corrupted. Please Logout and Login again.");
+        return;
+    }
+
+    // Safety Check: Does the data exist?
+    if (!questionBank[user.dept] || !questionBank[user.dept][activeLevel] || !questionBank[user.dept][activeLevel][code]) {
+        console.error("Data missing in QuestionBank", questionBank);
+        document.getElementById('paperContentArea').innerHTML = "<p>Error: Course data not found locally.</p>";
+        return;
+    }
+
     const paper = questionBank[user.dept][activeLevel][code].data[year][semester];
     const displayArea = document.getElementById('paperContentArea');
     
-    let htmlContent = "";
+    console.log("2. Found Local Paper Object:", paper); // DEBUG
 
-    if (paper.fileData) {
-        if (paper.type === 'pdf' || paper.fileData.startsWith('data:application/pdf')) {
-            htmlContent = `<iframe src="${paper.fileData}" width="100%" height="600px" style="border:none; border-radius:10px; background:white;"></iframe>`;
+    // SHOW LOADING
+    displayArea.innerHTML = `
+        <div style="text-align:center; padding: 40px; color:white;">
+            <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: var(--accent);"></i>
+            <p style="margin-top:10px;">Fetching from Cloud...</p>
+        </div>
+    `;
+
+    try {
+        // LAZY LOAD
+        if (!paper.fileData) {
+            console.log("3. File missing. Fetching ID:", paper._id); // DEBUG
+            
+            if (!paper._id) throw new Error("Paper ID is missing. Cannot fetch.");
+
+            // FETCH
+            const response = await fetch(`${BASE_URL}/${paper._id}`);
+            console.log("4. Server Response Status:", response.status); // DEBUG
+
+            if (!response.ok) {
+                const errText = await response.text();
+                throw new Error(`Server Error: ${response.status} - ${errText}`);
+            }
+            
+            const fullPaper = await response.json();
+            console.log("5. Downloaded Full Paper:", fullPaper); // DEBUG
+            
+            // UPDATE CACHE
+            paper.fileData = fullPaper.fileData;
+            paper.type = fullPaper.type;
+            paper.sections = fullPaper.sections;
         } else {
-            htmlContent = `<img src="${paper.fileData}" style="width:100%; border-radius:10px; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">`;
+            console.log("3. File already cached. Loading instantly."); // DEBUG
         }
-    } else {
-        htmlContent = "<p>Error: File data is missing or corrupted.</p>";
-    }
 
-    if (paper.sections && paper.sections.length > 0) {
-        htmlContent += paper.sections.map(sec => `
-            <div style="margin-top: 30px; padding: 20px; background: rgba(0,0,0,0.2); border-radius: 10px;">
-                <h4 style="color:var(--accent); margin-bottom: 10px;">${sec.title}</h4>
-                ${sec.questions.map((q, i) => `<p style="margin-bottom: 8px;"><strong>${i+1}.</strong> ${q.text}</p>`).join('')}
+        // RENDER CONTENT
+        let htmlContent = "";
+
+        if (paper.fileData) {
+            if (paper.type === 'pdf' || (typeof paper.fileData === 'string' && paper.fileData.startsWith('data:application/pdf'))) {
+                htmlContent = `<iframe src="${paper.fileData}" width="100%" height="600px" style="border:none; border-radius:10px; background:white;"></iframe>`;
+            } else {
+                htmlContent = `<img src="${paper.fileData}" style="width:100%; border-radius:10px;">`;
+            }
+        } else {
+            htmlContent = "<p style='color:red;'>Error: File data is empty.</p>";
+        }
+
+        // Render Sections
+        if (paper.sections && paper.sections.length > 0) {
+            htmlContent += paper.sections.map(sec => `
+                <div style="margin-top: 20px; padding: 15px; background: rgba(0,0,0,0.2);">
+                    <h4>${sec.title}</h4>
+                    ${sec.questions.map((q, i) => `<p>${i+1}. ${q.text}</p>`).join('')}
+                </div>
+            `).join('');
+        }
+
+        displayArea.innerHTML = htmlContent;
+
+    } catch (error) {
+        console.error("CRITICAL ERROR:", error); // DEBUG
+        displayArea.innerHTML = `
+            <div style="text-align:center; color:red; padding:20px;">
+                <i class="fas fa-bug"></i><br>
+                <b>Error:</b> ${error.message}
             </div>
-        `).join('');
+        `;
     }
-
-    displayArea.innerHTML = htmlContent;
 }
-
-window.closeViewer = () => {
-    document.getElementById('paperViewer').style.display = 'none';
-    document.body.style.overflow = 'auto';
-};
-
 // ==========================================
 // 6. ADMIN HIERARCHY
 // ==========================================
