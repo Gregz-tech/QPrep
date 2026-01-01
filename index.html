@@ -90,69 +90,6 @@
         </nav>
     </aside>
 
-    <div id="authModal" class="modal-overlay">
-        <div class="auth-card glass">
-            <div class="auth-header">
-                <i class="fas fa-graduation-cap" id="authIcon"></i>
-                <h2 id="authTitle">Welcome to QPrep</h2>
-            </div>
-            <div class="mode-toggle">
-                <button type="button" class="tab-btn active" id="studentTab" onclick="setAuthMode('student')">Student</button>
-                <button type="button" class="tab-btn" id="adminTab" onclick="setAuthMode('admin')">Admin</button>
-            </div>
-            <form id="registrationForm">
-                <div id="studentFields">
-                    <div class="input-group">
-                        <label>Full Name</label>
-                        <input type="text" id="regName" placeholder="Enter name">
-                    </div>
-                    <div class="input-row">
-                        <div class="input-group">
-                            <label>Dept</label>
-                            <select id="regDept">
-                                <option value="ITH">ITH</option>
-                                <option value="AUD">AUD</option>
-                                <option value="BCH">BCH</option>
-                                <option value="BMB">BMB</option>
-                                <option value="EHS">EHS</option>
-                                <option value="MBBS">MBBS</option>
-                                <option value="MCB">MCB</option>
-                                <option value="MCB">MLS</option>
-                                <option value="NUR">NUR</option>
-                                <option value="NUT">NUT</option>
-                                <option value="PHM">PHM</option>
-                                <option value="PRT">PRT</option>
-                                <option value="PST">PST</option>
-                                
-                            </select>
-                        </div>
-                        <div class="input-group">
-                            <label>Level</label>
-                            <select id="regLevel">
-                                <option value="100">100L</option>
-                                <option value="200">200L</option>
-                                <option value="300">300L</option>
-                                <option value="400">400L</option>
-                                <option value="500">500L</option>
-                             </select>
-                        </div>
-                    </div>
-                </div>
-                <div id="adminFields" style="display: none;">
-                    <div class="input-group">
-                        <label>Admin Email</label>
-                        <input type="email" id="adminEmail" placeholder="admin@qprep.com">
-                    </div>
-                    <div class="input-group">
-                        <label>Password</label>
-                        <input type="password" id="adminPass" placeholder="••••••••">
-                    </div>
-                </div>
-                <button type="submit" class="btn-primary">Enter Dashboard</button>
-            </form>
-        </div>
-    </div>
-
     <div class="app-container">
       <aside class="sidebar glass" style="display: flex; flex-direction: column; justify-content: space-between; height: 100vh;">
         <div>
