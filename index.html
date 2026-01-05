@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QPrep | FUHSI Academic PQs</title>
+    <title>QPrep | Academic PQs</title>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="/css/sidebarlLink.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 </head>
@@ -19,6 +20,7 @@
             <i class="fas fa-graduation-cap"></i>
             <span>QPrep</span>
         </div>
+        
         <div class="mobile-user">
             <button onclick="logoutUser()" class="mobile-logout">
                 <i class="fas fa-sign-out-alt"></i>
@@ -60,25 +62,28 @@
         </div>
         
         <nav class="mobile-nav-menu">
-            <a href="#" class="mobile-nav-item active" onclick="closeMobileSidebar()">
-                <i class="fas fa-th-large"></i>
-                <span>Dashboard</span>
-            </a>
-
-               <div class="nav-label">Archive</div>
-                        <div class="archive-dropdown glass-input" style="margin: 0 15px; border-radius: 12px; overflow: hidden;">
-                            <div class="archive-header" onclick="toggleArchiveMenu()" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; cursor: pointer;">
-                                <span><i class="fas fa-archive"></i> My Archive</span>
-                                <i class="fas fa-chevron-down" id="archiveIcon"></i>
-                            </div>
-                            <div id="archiveLevels" style="display: none; background: rgba(0,0,0,0.2); border-top: 1px solid var(--glass-border);">
-                                <a href="#" class="nav-item" onclick="viewArchiveLevel('100')">100 Level</a>
-                                <a href="#" class="nav-item" onclick="viewArchiveLevel('200')">200 Level</a>
-                                <a href="#" class="nav-item" onclick="viewArchiveLevel('300')">300 Level</a>
-                                <a href="#" class="nav-item" onclick="viewArchiveLevel('400')">400 Level</a>
-                                <a href="#" class="nav-item" onclick="viewArchiveLevel('500')">500 Level</a>
-                            </div>
-                        </div>
+         <ul class="nav-links">
+    <li onclick="renderDashboard(); closeSidebar()" class="active">
+        <i class="fas fa-home"></i> 
+        <span>Dashboard</span>
+    </li>
+    
+    <li onclick="renderArchive(); closeSidebar()">
+        <i class="fas fa-history"></i> 
+        <span>My Archive</span>
+    </li>
+    
+    <li onclick="renderSaved(); closeSidebar()">
+        <i class="fas fa-bookmark"></i> 
+        <span>Saved</span>
+    </li>
+    
+    <li class="fab" onclick="document.getElementById('uploadModal').style.display='flex'; closeSidebar()" style="display:none;">
+        <i class="fas fa-plus"></i> 
+        <span>Upload</span>
+    </li>
+    
+</ul>
                         
             <div id="mobileAdminOnlyNav" style="display: none;">
                 <div class="mobile-nav-label">Management</div>
@@ -98,22 +103,23 @@
             </div>
             
             <nav class="nav-menu">
-                <a href="#" class="nav-item active"><i class="fas fa-th-large"></i> Dashboard</a>
-                
-                <div class="nav-label">Archive</div>
-                <div class="archive-dropdown glass-input" style="margin: 0 15px; border-radius: 12px; overflow: hidden;">
-                    <div class="archive-header" onclick="toggleArchiveMenu()" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; cursor: pointer;">
-                        <span><i class="fas fa-archive"></i> My Archive</span>
-                        <i class="fas fa-chevron-down" id="archiveIcon"></i>
-                    </div>
-                    <div id="archiveLevels" style="display: none; background: rgba(0,0,0,0.2); border-top: 1px solid var(--glass-border);">
-                        <a href="#" class="nav-item" onclick="viewArchiveLevel('100')">100 Level</a>
-                        <a href="#" class="nav-item" onclick="viewArchiveLevel('200')">200 Level</a>
-                        <a href="#" class="nav-item" onclick="viewArchiveLevel('300')">300 Level</a>
-                        <a href="#" class="nav-item" onclick="viewArchiveLevel('400')">400 Level</a>
-                        <a href="#" class="nav-item" onclick="viewArchiveLevel('500')">500 Level</a>
-                    </div>
-                </div>
+               <ul class="nav-links">
+    <li onclick="renderDashboard()" class="">
+        <i class="fas fa-home"></i> 
+        <span>Dashboard</span>
+    </li>
+    
+    <li onclick="renderArchive()">
+        <i class="fas fa-history"></i> 
+        <span>My Archive</span>
+    </li>
+    
+    <li onclick="renderSaved()">
+        <i class="fas fa-bookmark"></i> 
+        <span>Saved</span>
+    </li>
+
+</ul>
                 
                 <div id="adminOnlyNav" style="display: none; margin-top: 20px;">
                     <div class="nav-label" style="font-size: 0.8rem; opacity: 0.6; margin-bottom: 10px;">MANAGEMENT</div>
@@ -192,7 +198,6 @@
 </div>
 
 <style>
-    /* Your CSS is perfect, keep it exactly as is! */
     .checkbox-grid {
         display: grid;
         grid-template-columns: 1fr 1fr 1fr;
@@ -298,6 +303,9 @@
 
     <script src="js/data.js"></script>
     <script src="js/ui.js"></script>
+    <script src="js/saved.js"></script>
+        <script src="js/archive.js"></script>
+
     <script src="js/admin.js"></script>
     <script src="js/responsive.js"></script>
     <script src="js/app.js"></script>

@@ -22,11 +22,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     window.user = JSON.parse(storedUser);
-    // Normalize Dept to ensure matches (e.g., "ith" -> "ITH")
     if (window.user.dept) window.user.dept = window.user.dept.trim().toUpperCase();
 
     updateProfileUI();
     
+    // Admin Button Check
     const adminBtn = document.querySelector('.fab'); 
     if (adminBtn) adminBtn.style.display = (window.user.role === 'student') ? 'none' : 'flex';
 
@@ -36,12 +36,12 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ==========================================
-// 2. DATA LOADING (Robust & Persistent) ⚙️
+// 2. DATA LOADING (Robust & Silent) ⚙️
 // ==========================================
 async function loadPapersFromBackend() {
     try {
         const grid = document.getElementById('questionsGrid');
-        // Only show spinner if this is the FIRST load
+        // Only show spinner if this is the FIRST load (Bank empty)
         if(grid && Object.keys(window.questionBank).length === 0) {
             grid.innerHTML = `<div style="text-align:center; padding:40px; color:white; opacity:0.7;"><i class="fas fa-circle-notch fa-spin"></i><br>Loading Library...</div>`;
         }
@@ -51,7 +51,7 @@ async function loadPapersFromBackend() {
         
         const papers = await response.json();
         
-        // ⚠️ CRITICAL CHANGE: Don't wipe the bank immediately. Build a new one first.
+        // Build new bank
         const newBank = {}; 
 
         papers.forEach(p => {
@@ -145,11 +145,9 @@ function renderCourseGridBySemester(semester) {
     const container = document.getElementById('questionsGrid');
     const userDept = (window.user.dept || "").toUpperCase(); 
     
-    // 🛡️ Fallback: If user dept empty, show everything (Debug mode)
+    // 🛡️ Fallback: If user dept empty, try case-insensitive search
     let deptData = window.questionBank[userDept];
-
     if (!deptData) {
-        // Try searching for the dept with different casing
         const matchingKey = Object.keys(window.questionBank).find(k => k.toUpperCase() === userDept);
         if (matchingKey) deptData = window.questionBank[matchingKey];
     }
@@ -181,6 +179,7 @@ function renderCourseGridBySemester(semester) {
         return;
     }
 
+    // ✅ Click calls openYearPicker
     container.innerHTML = filteredCodes.map(code => `
         <div class="stat-card glass" onclick="openYearPicker('${code}', '${semester}', '${matchedLevelKey}')" style="cursor:pointer;">
             <div class="icon-box blue"><i class="fas fa-book"></i></div>
@@ -193,13 +192,12 @@ function renderCourseGridBySemester(semester) {
 }
 
 // ==========================================
-// 4. YEAR SELECTOR (NO RELOAD LOOP!) 🛑
+// 4. YEAR SELECTOR (Fixes "ReferenceError" & "Alerts") 🛑
 // ==========================================
 function openYearPicker(code, semester, level) {
     console.log(`Opening Picker for: ${code}`);
 
     // 1. GLOBAL SEARCH ALGORITHM
-    // Instead of relying on user.dept, we scan the ENTIRE bank to find this course.
     const normalize = (str) => String(str).replace(/\s+/g, '').toLowerCase();
     const searchCode = normalize(code);
     let courseData = null;
@@ -213,7 +211,6 @@ function openYearPicker(code, semester, level) {
             for (const dbCode in courses) {
                 if (normalize(dbCode) === searchCode) {
                     courseData = courses[dbCode];
-                    console.log(`✅ Found ${code} in ${deptKey} - ${lvlKey}`);
                     break outerLoop;
                 }
             }
@@ -221,7 +218,7 @@ function openYearPicker(code, semester, level) {
     }
 
     if (!courseData) { 
-        alert("System Error: Course data not found in memory. Please refresh manually."); 
+        showToast("System Error: Course data not found.", "error"); 
         return; 
     }
 
@@ -341,7 +338,7 @@ async function fetchAndDisplayPaper(code, semester, level, year) {
 }
 
 // ==========================================
-// 6. UTILITIES
+// 6. UTILITIES (Updated Logout Logic) ✅
 // ==========================================
 function showToast(message, type = 'info') {
     const container = document.getElementById('toast-container');
@@ -377,7 +374,31 @@ function updateProfileUI() {
 }
 
 window.closeViewer = () => { document.getElementById('paperViewer').style.display = 'none'; document.body.style.overflow = 'auto'; };
-window.logoutUser = function() { if(confirm("Logout?")) { localStorage.removeItem('user'); window.location.href = 'login.html'; } };
+
+// ✅ NEW LOGOUT LOGIC (Uses your custom #confirmModal instead of browser alert)
+window.logoutUser = function() { 
+    const modal = document.getElementById('confirmModal');
+    if (modal) {
+        modal.style.display = 'flex';
+        // Attach event listener to the "Ok" button inside the modal
+        const okBtn = document.getElementById('confirmOkBtn');
+        if (okBtn) {
+            okBtn.onclick = function() {
+                localStorage.removeItem('user');
+                window.location.href = 'login.html';
+            };
+        }
+    } else {
+        // Fallback if modal is missing in HTML
+        if(confirm("Logout?")) { localStorage.removeItem('user'); window.location.href = 'login.html'; }
+    }
+};
+
+window.closeConfirmModal = function() {
+    const modal = document.getElementById('confirmModal');
+    if (modal) modal.style.display = 'none';
+};
+
 window.setupSearchFeature = function() {
     document.getElementById('courseSearch')?.addEventListener('input', (e) => {
         const term = e.target.value.toLowerCase();
@@ -391,10 +412,140 @@ window.toggleHierarchy = function(id) {
     if(el) el.style.display = (el.style.display === "none" || el.style.display === "") ? "block" : "none";
 };
 
-// Exports
+// ==========================================
+// 7. EXPORTS (Fixes "ReferenceError") 🚀
+// ==========================================
 window.renderDashboard = renderDashboard;
 window.renderCourseGridBySemester = renderCourseGridBySemester;
-window.openYearPicker = openYearPicker;
+window.openYearPicker = openYearPicker; // ✅ Matched the name!
 window.fetchAndDisplayPaper = fetchAndDisplayPaper;
 window.updateProfileUI = updateProfileUI;
 window.showToast = showToast;
+window.closeConfirmModal = closeConfirmModal;
+
+// ==========================================
+// 8. MOBILE MENU CLOSER (The "Hunter") 🏹
+// ==========================================
+window.closeSidebar = function() {
+    // 1. Find ANY checkbox on the page (The menu toggle is usually the only one in the header)
+    const toggle = document.querySelector('nav input[type="checkbox"]') || document.querySelector('input[type="checkbox"]');
+    
+    // 2. Uncheck it force-fully
+    if (toggle) {
+        toggle.checked = false;
+    }
+    
+    // 3. Fallback: If your template uses a class instead of a checkbox
+    const sidebar = document.querySelector('.sidebar');
+    if (sidebar) {
+        sidebar.classList.remove('active');
+        sidebar.classList.remove('show');
+    }
+};
+
+// ==========================================
+// MOBILE RAIL LOGIC 🚆
+// ==========================================
+
+window.toggleMobileSidebar = function() {
+    const sidebar = document.getElementById('sidebar');
+    const appContainer = document.querySelector('.app-container');
+    
+    if (sidebar) sidebar.classList.toggle('mobile-open');
+    if (appContainer) appContainer.classList.toggle('content-shift');
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+    const links = document.querySelectorAll('.nav-links li');
+    const sidebar = document.getElementById('sidebar');
+    const appContainer = document.querySelector('.app-container');
+
+    links.forEach(link => {
+        link.addEventListener('click', () => {
+            // Only auto-close if on mobile AND expanded
+            if (window.innerWidth <= 768 && sidebar.classList.contains('mobile-open')) {
+                sidebar.classList.remove('mobile-open');
+                if (appContainer) appContainer.classList.remove('content-shift');
+            }
+            
+            // Highlight active
+            links.forEach(l => l.classList.remove('active'));
+            link.classList.add('active');
+        });
+    });
+});
+
+// ==========================================
+// MOBILE SIDEBAR LOGIC (Classic Overlay) 🍔
+// ==========================================
+
+// 1. Toggle Function (Opens/Closes Sidebar)
+window.toggleSidebar = function() {
+    const sidebar = document.querySelector('.sidebar');
+    sidebar.classList.toggle('active'); // 'active' class makes it slide in
+};
+
+// 2. Auto-Close Listener (The Fix)
+document.addEventListener('DOMContentLoaded', () => {
+    // Select all list items in the sidebar
+    const navLinks = document.querySelectorAll('.nav-links li');
+    const sidebar = document.querySelector('.sidebar');
+
+    navLinks.forEach(link => {
+        link.addEventListener('click', () => {
+            // If screen is mobile (less than 768px)
+            if (window.innerWidth <= 768) {
+                // Remove the 'active' class to slide it back out
+                sidebar.classList.remove('active');
+            }
+        });
+    });
+});
+
+// ==========================================
+// MOBILE SIDEBAR CONTROLS 🍔
+// ==========================================
+
+// 1. Toggle Button Action
+window.toggleSidebar = function() {
+    const sidebar = document.querySelector('.sidebar');
+    const closeBtn = document.getElementById('closeBtn');
+    
+    sidebar.classList.toggle('active');
+    
+    // Toggle the "X" button visibility if you have one
+    if (closeBtn) {
+        const isActive = sidebar.classList.contains('active');
+        closeBtn.style.display = isActive ? 'block' : 'none';
+    }
+};
+
+// 2. Auto-Close on Link Click
+document.addEventListener('DOMContentLoaded', () => {
+    const links = document.querySelectorAll('.nav-links li');
+    const sidebar = document.querySelector('.sidebar');
+    const closeBtn = document.getElementById('closeBtn');
+
+    links.forEach(link => {
+        link.addEventListener('click', () => {
+            // Only on mobile
+            if (window.innerWidth <= 768) {
+                sidebar.classList.remove('active'); // Close Sidebar
+                if (closeBtn) closeBtn.style.display = 'none'; // Hide X
+            }
+        });
+    });
+});
+
+// 3. Close when clicking OUTSIDE the sidebar (Optional Polish)
+window.addEventListener('click', (e) => {
+    const sidebar = document.querySelector('.sidebar');
+    const hamburger = document.querySelector('.hamburger-btn');
+    
+    if (window.innerWidth <= 768 && sidebar.classList.contains('active')) {
+        // If click is NOT on sidebar AND NOT on the hamburger button
+        if (!sidebar.contains(e.target) && !hamburger.contains(e.target)) {
+            sidebar.classList.remove('active');
+        }
+    }
+});

@@ -1,0 +1,63 @@
+/* =========================
+   MODERN SIDEBAR STYLES
+   ========================= */
+
+/* 1. The Container (Resetting the list) */
+.nav-links {
+    list-style: none; /* Removes the bullet points */
+    padding: 0;
+    margin-top: 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px; /* Space between buttons */
+}
+
+/* 2. The Buttons (The 'li' items) */
+.nav-links li {
+    display: flex;
+    align-items: center;
+    gap: 15px; /* Space between Icon and Text */
+    padding: 16px 20px;
+    border-radius: 12px;
+    color: rgba(255, 255, 255, 0.7); /* Slightly dimmed text */
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease; /* Smooth animation */
+    border: 1px solid transparent; /* Prevents layout shift on hover */
+}
+
+/* 3. Icons inside the buttons */
+.nav-links li i {
+    font-size: 1.2rem;
+    width: 25px; /* Ensures text aligns perfectly even if icon sizes vary */
+    text-align: center;
+}
+
+/* 4. HOVER STATE (When mouse is over) */
+.nav-links li:hover {
+    background: rgba(255, 255, 255, 0.1); /* Glass effect */
+    color: white;
+    transform: translateX(5px); /* Slight slide to the right */
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* 5. ACTIVE STATE (The page you are currently on) */
+.nav-links li.active {
+    background: var(--accent); /* Uses your main blue color */
+    color: white;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3); /* Glow effect */
+}
+
+/* 6. LOGOUT BUTTON (Special Styling) */
+.logout-btn {
+    margin-top: 40px; /* Pushes it down */
+    color: #ef4444 !important; /* Red color */
+    border: 1px solid rgba(239, 68, 68, 0.2) !important;
+}
+
+.logout-btn:hover {
+    background: rgba(239, 68, 68, 0.1) !important;
+    border-color: #ef4444 !important;
+    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.2);
+}

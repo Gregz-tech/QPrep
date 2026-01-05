@@ -56,7 +56,7 @@ body {
     align-items: center;
     justify-content: space-between;
     padding: 15px 20px;
-    background: rgba(15, 23, 42, 0.95);
+    background: rgba(105, 109, 117, 0.95);
     backdrop-filter: blur(10px);
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     z-index: 1000;
@@ -83,7 +83,7 @@ body {
     gap: 10px;
     font-size: 1.2rem;
     font-weight: 700;
-    color: var(--accent);
+    color: rgb(0, 0, 255);
 }
 
 .mobile-logout {
@@ -1679,3 +1679,33 @@ body {
     }
 }
 
+/* INSIDE @media (max-width: 768px) { ... } */
+
+/* 1. HIDE DESKTOP SIDEBAR BY DEFAULT */
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: -250px; /* Hide off-screen */
+    height: 100vh;
+    width: 220px; /* ✅ SLIMMER WIDTH (Was likely 280px) */
+    background: #11101d; /* Dark background */
+    z-index: 10000;
+    transition: all 0.4s ease;
+    box-shadow: 5px 0 15px rgba(0,0,0,0.2);
+    display: flex;
+    flex-direction: column;
+    padding: 20px 15px; /* Reduce padding to fit content in narrower space */
+}
+
+/* 2. ACTIVE STATE (SLIDE IN) */
+.sidebar.active {
+    left: 0; /* Slides into view */
+}
+
+/* 3. ENSURE CONTENT DOESN'T SHIFT */
+/* The main content should NOT move when sidebar opens on mobile */
+body .app-container {
+    padding: 70px 15px 15px !important; /* Keep header space */
+    width: 100% !important;
+    margin-left: 0 !important;
+}
