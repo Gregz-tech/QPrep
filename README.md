@@ -2,7 +2,7 @@
 
 **QPrep** is a web-based platform designed to provide students with seamless access to academic past questions. It serves as a digital departmental library, allowing users to view current semester materials, browse previous academic levels via an "Archive," and bookmark important papers for offline-like access.
 
-## 🚀 Features
+##  Features
 
 ### 👤 Student Dashboard
 * **Smart Semester View:** Automatically displays courses and past questions relevant to the user's current Department and Level.
