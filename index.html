@@ -6,6 +6,7 @@
     <title>QPrep | Academic PQs</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="/css/sidebarlLink.css">
+    <link rel="stylesheet" href="css/super_admin.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 </head>
@@ -82,6 +83,13 @@
         <i class="fas fa-plus"></i> 
         <span>Upload</span>
     </li>
+
+    <li id="superAdminBtnMobile" onclick="renderSuperAdmin(); closeSidebar()" style="display: none; cursor: pointer;">
+        <a href="#">
+            <i class="fas fa-user-shield" style="color: #a78bfa;"></i>
+            <span class="link_name" style="color: #a78bfa;">System Admin</span>
+        </a>
+    </li>
     
 </ul>
                         
@@ -117,6 +125,14 @@
     <li onclick="renderSaved()">
         <i class="fas fa-bookmark"></i> 
         <span>Saved</span>
+    </li>
+
+    <li id="superAdminBtn" onclick="renderSuperAdmin()" style="display: none; cursor: pointer;">
+        <a href="#">
+            <i class="fas fa-user-shield" style="color: #a78bfa;"></i>
+            <span class="link_name" style="color: #a78bfa;">System Admin</span>
+        </a>
+        <span class="tooltip">System Admin</span>
     </li>
 
 </ul>
@@ -268,8 +284,7 @@
     <button type="button" onclick="closeAdminPanel()" class="btn-secondary">Cancel</button>
 </div>
                 <div class="admin-workspace glass">
-                    <!-- <div id="objFieldsContainer"></div> -->
-                </div>
+                    </div>
             </div>
         </div>
     </div>
@@ -304,12 +319,13 @@
     <script src="js/data.js"></script>
     <script src="js/ui.js"></script>
     <script src="js/saved.js"></script>
-        <script src="js/archive.js"></script>
+    <script src="js/archive.js"></script>
 
     <script src="js/admin.js"></script>
     <script src="js/responsive.js"></script>
     <script src="js/app.js"></script>
 
+    <script src="js/super_admin.js"></script>
      <div id="toast-container"></div>
     </body>
 </html>
