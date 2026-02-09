@@ -1,9 +1,9 @@
 // ==========================================
-// SUPER ADMIN PORTAL 👑 (Real Data + Filters)
+// SUPER ADMIN PORTAL 👑 (With Bulk Delete)
 // ==========================================
 const SA_API_BASE = 'https://qprep-backend-1.onrender.com/api/super-admin';
 
-// Helper to get token safely
+// Helper to get token
 const getAuthToken = () => {
     const user = JSON.parse(localStorage.getItem('user'));
     return user ? (user.token || localStorage.getItem('token')) : '';
@@ -26,11 +26,9 @@ async function renderSuperAdmin() {
         SYSTEM OVERVIEW
     `;
 
-    // Show Loading
-    grid.innerHTML = `<div style="text-align:center; padding:40px; color:white;"><i class="fas fa-circle-notch fa-spin"></i> Loading Real Data...</div>`;
+    grid.innerHTML = `<div style="text-align:center; padding:40px; color:white;"><i class="fas fa-circle-notch fa-spin"></i> Loading Data...</div>`;
 
     try {
-        // Fetch Stats
         const response = await fetch(`${SA_API_BASE}/stats`);
         const stats = await response.json(); 
 
@@ -71,33 +69,29 @@ async function renderSuperAdmin() {
         animateValue("countPapers", 0, stats.totalPapers, 1000);
         animateValue("countStudents", 0, stats.totalStudents, 1000);
 
-        renderUserManagement(); // Load users immediately
+        renderUserManagement(); 
 
     } catch (error) {
         console.error(error);
-        grid.innerHTML = `<p style="color:red; text-align:center;">Server Offline or Error.</p>`;
+        grid.innerHTML = `<p style="color:red; text-align:center;">Server Offline.</p>`;
     }
 }
 
-// 2. USER MANAGEMENT (Real Fetch + Filter)
+// 2. USER MANAGEMENT
 async function renderUserManagement() {
     const container = document.getElementById('sa-content-area');
-    container.innerHTML = `<div style="text-align:center; padding:20px;"><i class="fas fa-spinner fa-spin"></i> Fetching User Registry...</div>`;
+    container.innerHTML = `<div style="text-align:center; padding:20px;"><i class="fas fa-spinner fa-spin"></i> Fetching Users...</div>`;
 
     try {
         const token = getAuthToken();
-        const res = await fetch(`${SA_API_BASE}/users`, {
-            headers: { 'Authorization': token }
-        });
-        
-        if (!res.ok) throw new Error("Failed to load users");
+        const res = await fetch(`${SA_API_BASE}/users`, { headers: { 'Authorization': token } });
         const users = await res.json();
 
         container.innerHTML = `
             <div class="glass" style="padding:20px;">
                 <div class="sa-section-header">
                     <h3>User Registry (${users.length})</h3>
-                    <input type="text" id="saUserSearch" placeholder="Search name or dept..." class="glass-input" 
+                    <input type="text" id="saUserSearch" placeholder="Search name..." class="glass-input" 
                            style="padding:10px; width:200px;" onkeyup="filterUsersTable()">
                 </div>
                 <div class="sa-table-container">
@@ -106,7 +100,7 @@ async function renderUserManagement() {
                             <tr>
                                 <th>User Details</th>
                                 <th>Role</th>
-                                <th>Actions</th>
+                                <th style="text-align:center;">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -117,13 +111,15 @@ async function renderUserManagement() {
                                         <small style="opacity:0.6">${u.department || 'N/A'} • ${u.level || 'N/A'}</small>
                                     </td>
                                     <td><span class="sa-badge ${u.role}">${u.role.toUpperCase()}</span></td>
-                                    <td>
+                                    <td style="text-align:center;">
                                         ${u.role === 'super_admin' ? '<span style="opacity:0.5; font-size:0.8rem;">System Owner</span>' : `
-                                            ${u.role === 'student' ? 
-                                                `<button onclick="confirmAction('Promote ${u.username} to Admin?', () => updateUserRole('${u._id}', 'admin'))" class="sa-btn sa-btn-promote"><i class="fas fa-arrow-up"></i></button>` : 
-                                                `<button onclick="confirmAction('Demote ${u.username} to Student?', () => updateUserRole('${u._id}', 'student'))" class="sa-btn sa-btn-demote"><i class="fas fa-arrow-down"></i></button>`
-                                            }
-                                            <button onclick="confirmAction('Delete ${u.username} permanently?', () => deleteUserReal('${u._id}'))" class="sa-btn sa-btn-delete"><i class="fas fa-trash"></i></button>
+                                            <div style="display:flex; justify-content:center; gap:8px;">
+                                                ${u.role === 'student' ? 
+                                                    `<button onclick="confirmAction('Promote ${u.username}?', () => updateUserRole('${u._id}', 'admin'))" class="sa-btn btn-icon" style="color:#4ade80; border:1px solid #4ade80;"><i class="fas fa-arrow-up"></i></button>` : 
+                                                    `<button onclick="confirmAction('Demote ${u.username}?', () => updateUserRole('${u._id}', 'student'))" class="sa-btn btn-icon" style="color:#fbbf24; border:1px solid #fbbf24;"><i class="fas fa-arrow-down"></i></button>`
+                                                }
+                                                <button onclick="confirmAction('Delete ${u.username}?', () => deleteUserReal('${u._id}'))" class="sa-btn btn-icon" style="color:#ef4444; border:1px solid #ef4444;"><i class="fas fa-trash"></i></button>
+                                            </div>
                                         `}
                                     </td>
                                 </tr>
@@ -138,12 +134,12 @@ async function renderUserManagement() {
     }
 }
 
-// 3. PAPER MANAGEMENT (Real Logic + Filters)
+// 3. PAPER MANAGEMENT (With Bulk Delete) 🗑️📦
 function renderPaperManagement() {
     const container = document.getElementById('sa-content-area');
-    
-    // Client-side access to window.questionBank
     let allPapers = [];
+    
+    // Flatten Data
     if(window.questionBank) {
         Object.keys(window.questionBank).forEach(dept => {
             Object.keys(window.questionBank[dept]).forEach(level => {
@@ -170,8 +166,15 @@ function renderPaperManagement() {
 
     container.innerHTML = `
         <div class="glass" style="padding:20px;">
-             <div class="sa-section-header" style="flex-wrap:wrap; gap:10px;">
-                <h3>Paper Repository (${allPapers.length})</h3>
+             <div class="sa-section-header" style="flex-wrap:wrap; gap:10px; align-items:center; justify-content: space-between;">
+                
+                <div style="display:flex; align-items:center; gap:15px;">
+                    <h3>Papers (${allPapers.length})</h3>
+                    <button id="bulkDeleteBtn" onclick="confirmBulkDelete()" class="btn-primary" 
+                        style="display:none; width:auto; padding: 8px 15px; background: #ef4444; font-size:0.9rem; margin:0;">
+                        <i class="fas fa-trash"></i> Delete Selected (<span id="selectedCount">0</span>)
+                    </button>
+                </div>
                 
                 <div style="display:flex; gap:10px;">
                     <select id="filterDept" class="glass-input" onchange="filterPapersTable()" style="padding:8px; border-radius:6px;">
@@ -180,7 +183,7 @@ function renderPaperManagement() {
                         <option value="CSC">CSC</option>
                         <option value="NUR">NUR</option>
                         <option value="MBBS">MBBS</option>
-                         <option value="BCH">BCH</option>
+                        <option value="BCH">BCH</option>
                     </select>
                     
                     <select id="filterLevel" class="glass-input" onchange="filterPapersTable()" style="padding:8px; border-radius:6px;">
@@ -199,15 +202,35 @@ function renderPaperManagement() {
 
             <div class="sa-table-container">
                 <table class="sa-table">
-                    <thead><tr><th>Code</th><th>Dept / Level</th><th>Session</th><th>Action</th></tr></thead>
+                    <thead>
+                        <tr>
+                            <th style="width: 40px; text-align: center;">
+                                <input type="checkbox" id="selectAllPapers" onclick="toggleAllPaperChecks()" style="cursor:pointer; width:16px; height:16px;">
+                            </th>
+                            <th>Code</th>
+                            <th>Dept / Level</th>
+                            <th>Session</th>
+                            <th style="text-align:center;">Action</th>
+                        </tr>
+                    </thead>
                     <tbody>
                         ${allPapers.map(p => `
                             <tr class="paper-row" data-dept="${p.dept}" data-level="${p.level}" data-code="${p.code.toLowerCase()}">
+                                <td style="text-align: center;">
+                                    <input type="checkbox" class="paper-checkbox" value="${p.id}" onclick="updateBulkBtnState()" style="cursor:pointer; width:16px; height:16px;">
+                                </td>
                                 <td>${p.code}</td>
                                 <td>${p.dept} - ${p.level}L</td>
                                 <td>${p.year}</td>
-                                <td>
-                                    <button onclick="confirmAction('Delete ${p.code}?', () => deletePaperReal('${p.id}'))" class="sa-btn sa-btn-delete">DELETE</button>
+                                <td style="text-align:center;">
+                                    <div style="display:flex; justify-content:center; gap:8px;">
+                                        <button onclick="openEditPanel('${p.id}')" class="sa-btn btn-icon" style="color:#60a5fa; border:1px solid #60a5fa;">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button onclick="confirmAction('Delete ${p.code}?', () => deletePaperReal('${p.id}'))" class="sa-btn btn-icon" style="color:#ef4444; border:1px solid #ef4444;">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         `).join('')}
@@ -218,16 +241,74 @@ function renderPaperManagement() {
     `;
 }
 
-// 4. FILTERING LOGIC 🔍
+// 4. BULK DELETE LOGIC 🏗️
 
-window.filterUsersTable = () => {
-    const term = document.getElementById('saUserSearch').value.toLowerCase();
-    const rows = document.querySelectorAll('#usersTable tbody tr');
-    rows.forEach(row => {
-        row.style.display = row.innerText.toLowerCase().includes(term) ? "" : "none";
+// Toggle All Checkboxes
+window.toggleAllPaperChecks = () => {
+    const master = document.getElementById('selectAllPapers');
+    // Only select VISIBLE rows (respects filters)
+    const visibleRows = document.querySelectorAll('.paper-row:not([style*="display: none"])');
+    
+    visibleRows.forEach(row => {
+        const checkbox = row.querySelector('.paper-checkbox');
+        if(checkbox) checkbox.checked = master.checked;
+    });
+    
+    updateBulkBtnState();
+};
+
+// Check state and show/hide Bulk Button
+window.updateBulkBtnState = () => {
+    const checkedBoxes = document.querySelectorAll('.paper-checkbox:checked');
+    const btn = document.getElementById('bulkDeleteBtn');
+    const countSpan = document.getElementById('selectedCount');
+    
+    if (checkedBoxes.length > 0) {
+        btn.style.display = 'inline-flex';
+        btn.style.alignItems = 'center';
+        btn.style.gap = '8px';
+        countSpan.innerText = checkedBoxes.length;
+    } else {
+        btn.style.display = 'none';
+    }
+};
+
+// Confirm Bulk Delete
+window.confirmBulkDelete = () => {
+    const checkedBoxes = document.querySelectorAll('.paper-checkbox:checked');
+    const ids = Array.from(checkedBoxes).map(cb => cb.value);
+    
+    confirmAction(`Are you sure you want to delete ${ids.length} papers? This cannot be undone.`, () => {
+        performBulkDelete(ids);
     });
 };
 
+// Execute Bulk Delete API Call
+async function performBulkDelete(ids) {
+    try {
+        const token = getAuthToken();
+        const res = await fetch(`https://qprep-backend-1.onrender.com/api/papers/bulk-delete`, {
+            method: 'DELETE',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': token 
+            },
+            body: JSON.stringify({ ids })
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Bulk delete failed");
+
+        showToast(data.message, "success");
+        
+        // Refresh page to sync data
+        setTimeout(() => location.reload(), 1000); 
+    } catch (err) {
+        showToast(err.message, "error");
+    }
+}
+
+// 5. FILTER LOGIC (Updated to uncheck hidden boxes)
 window.filterPapersTable = () => {
     const dept = document.getElementById('filterDept').value;
     const level = document.getElementById('filterLevel').value;
@@ -237,20 +318,36 @@ window.filterPapersTable = () => {
     
     rows.forEach(row => {
         const rDept = row.getAttribute('data-dept');
-        const rLevel = row.getAttribute('data-level').replace(/\D/g, ''); // Extract number
+        const rLevel = row.getAttribute('data-level').replace(/\D/g, ''); 
         const rCode = row.getAttribute('data-code');
         
         const matchDept = dept === "" || rDept === dept;
         const matchLevel = level === "" || rLevel === level;
         const matchSearch = rCode.includes(search);
         
-        row.style.display = (matchDept && matchLevel && matchSearch) ? "" : "none";
+        if (matchDept && matchLevel && matchSearch) {
+            row.style.display = "";
+        } else {
+            row.style.display = "none";
+            // Important: Uncheck hidden rows so they aren't deleted accidentally
+            const cb = row.querySelector('.paper-checkbox');
+            if(cb) cb.checked = false; 
+        }
+    });
+    
+    // Update button state in case we hid checked items
+    updateBulkBtnState();
+};
+
+window.filterUsersTable = () => {
+    const term = document.getElementById('saUserSearch').value.toLowerCase();
+    const rows = document.querySelectorAll('#usersTable tbody tr');
+    rows.forEach(row => {
+        row.style.display = row.innerText.toLowerCase().includes(term) ? "" : "none";
     });
 };
 
-// 5. REAL ACTION FUNCTIONS ⚡
-
-// A. Update Role
+// 6. SINGLE ACTIONS
 window.updateUserRole = async (userId, newRole) => {
     try {
         const token = getAuthToken();
@@ -262,15 +359,13 @@ window.updateUserRole = async (userId, newRole) => {
         
         const data = await res.json();
         if(!res.ok) throw new Error(data.error);
-        
         showToast(data.message, "success");
-        renderUserManagement(); // Refresh the list
+        renderUserManagement();
     } catch (err) {
         showToast(err.message, "error");
     }
 };
 
-// B. Delete User
 window.deleteUserReal = async (userId) => {
     try {
         const token = getAuthToken();
@@ -278,18 +373,15 @@ window.deleteUserReal = async (userId) => {
             method: 'DELETE',
             headers: { 'Authorization': token }
         });
-
         const data = await res.json();
         if(!res.ok) throw new Error(data.error);
-
         showToast(data.message, "success");
-        renderUserManagement(); // Refresh
+        renderUserManagement();
     } catch (err) {
         showToast(err.message, "error");
     }
 };
 
-// C. Delete Paper
 window.deletePaperReal = async (paperId) => {
     try {
         const token = getAuthToken();
@@ -297,9 +389,7 @@ window.deletePaperReal = async (paperId) => {
             method: 'DELETE',
             headers: { 'Authorization': token }
         });
-
         if(!res.ok) throw new Error("Failed to delete paper");
-        
         showToast("Paper deleted.", "success");
         setTimeout(() => location.reload(), 1000); 
     } catch (err) {
@@ -309,15 +399,28 @@ window.deletePaperReal = async (paperId) => {
 
 // Helpers
 window.confirmAction = (msg, callback) => {
-    if(confirm(msg)) callback();
+    const modal = document.getElementById('confirmModal');
+    const question = document.getElementById('confirmQuestion');
+    const okBtn = document.getElementById('confirmOkBtn');
+    
+    if (!modal || !question || !okBtn) {
+        if(confirm(msg)) callback();
+        return;
+    }
+    question.innerText = msg;
+    modal.style.display = 'flex';
+    okBtn.onclick = () => {
+        callback();
+        modal.style.display = 'none';
+    };
 };
+
 function animateValue(id, start, end, duration) {
     const obj = document.getElementById(id);
     if (!obj) return;
     obj.innerHTML = end; 
 }
 
-// Exports
 window.renderSuperAdmin = renderSuperAdmin;
 window.renderUserManagement = renderUserManagement;
 window.renderPaperManagement = renderPaperManagement;
