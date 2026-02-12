@@ -1,6 +1,4 @@
-// ==========================================
-// SUPER ADMIN PORTAL 👑 (With Bulk Delete)
-// ==========================================
+
 const SA_API_BASE = 'https://qprep-backend-1.onrender.com/api/super-admin';
 
 // Helper to get token
@@ -18,7 +16,10 @@ async function renderSuperAdmin() {
 
     const grid = document.getElementById('questionsGrid');
     const heading = document.getElementById('courseHeading');
-    
+
+    grid.classList.remove('questions-grid'); 
+
+    grid.style.display = 'block';     
     heading.innerHTML = `
         <button onclick="renderDashboard()" class="btn-icon" style="margin-right:10px; background:none; border:none; color:white; cursor:pointer;">
             <i class="fas fa-arrow-left"></i>

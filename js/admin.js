@@ -26,6 +26,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 2. Render the Checkboxes (Wait for DOM)
     renderDepartmentCheckboxes();
+    
+    // 3. FORCE MULTI-FILE SUPPORT (In case HTML is missing 'multiple')
+    const uploadInput = document.getElementById('pqUpload');
+    if (uploadInput) {
+        uploadInput.setAttribute('multiple', 'multiple');
+    }
 });
 
 // A. RENDER CHECKBOXES
@@ -74,9 +80,7 @@ function checkScopeConstraints() {
         // Check and Enable ONLY the moderator's department
         if (myBox) {
             myBox.checked = true;
-            myBox.disabled = false; // Technically they can't uncheck it if logic forces it, but visual feedback is good
-            // Or keep it disabled but checked to show "This is forced":
-            myBox.disabled = true; 
+            myBox.disabled = true; // Keep disabled but checked to show "Forced"
         }
     }
 }
@@ -200,17 +204,6 @@ function renderAdminWorkspace() {
 window.updateSecTitle = (id, val) => { activeSections.find(s => s.id === id).title = val; };
 window.updateQText = (sid, qi, val) => { activeSections.find(s => s.id === sid).questions[qi].text = val; };
 
-// ==========================================
-// 3. FILE CONVERSION ENGINE
-// ==========================================
-const convertToBase64 = (file) => {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = error => reject(error);
-    });
-};
 
 function showNotification(msg, type) {
     if (window.showToast) window.showToast(msg, type);
@@ -218,7 +211,7 @@ function showNotification(msg, type) {
 }
 
 // ==========================================
-// 4. SECURE UPLOAD LOGIC (With Multi-Dept & JWT) 🔑
+// 4. SECURE CLOUD UPLOAD LOGIC (MULTI-PAGE) 📸📸
 // ==========================================
 
 async function saveNewQuestion() {
@@ -231,7 +224,7 @@ async function saveNewQuestion() {
 
     // B. Gather Selected Departments (The Array!)
     const selectedDepts = Array.from(document.querySelectorAll('#deptCheckboxContainer input:checked'))
-                               .map(cb => cb.value);
+                                   .map(cb => cb.value);
 
     // C. Validation
     if (!code || !year || !title) {
@@ -243,7 +236,7 @@ async function saveNewQuestion() {
         return;
     }
 
-    // D. Get Token & User (CRITICAL)
+    // D. Get Token (CRITICAL)
     const token = localStorage.getItem('token');
     if (!token) {
         showNotification("Session Expired. Please Login.", "error");
@@ -256,53 +249,59 @@ async function saveNewQuestion() {
     let originalText = "Save Paper";
     if (saveBtn) {
         originalText = saveBtn.innerText;
-        saveBtn.innerText = "Secure Uploading...";
+        saveBtn.innerText = "Uploading to Cloud..."; 
         saveBtn.disabled = true;
     }
 
     try {
+        // ✅ MULTI-FILE HANDLING
         const fileInput = document.getElementById('pqUpload');
-        const file = fileInput ? fileInput.files[0] : null;
-        
-        let base64Data = "";
-        let fileType = "image"; 
+        const files = fileInput ? fileInput.files : [];
 
-        if (file) {
-            base64Data = await convertToBase64(file);
-            fileType = file.type.includes('pdf') ? 'pdf' : 'image';
-        } else {
-            if(activeSections.length === 0) {
-                 throw new Error("Please upload a PDF/Image OR type questions.");
-            }
+        // Validation: Ensure file exists
+        if (files.length === 0) {
+             throw new Error("Please select at least one PDF or Image.");
         }
 
-        // F. Construct Payload (With DEPARTMENTS ARRAY)
-        const payload = {
-            courseCode: code,
-            courseTitle: title,
-            departments: selectedDepts, // 📤 SENDING ARRAY
-            level: level,
-            year: year,
-            semester: semester,
-            type: fileType, 
-            fileData: base64Data, 
-            sections: activeSections
-        };
+        // Update Text to show count
+        if (saveBtn) saveBtn.innerText = `Uploading ${files.length} Page(s)...`;
 
-        // G. Send to Render
+        // F. Create FormData
+        const formData = new FormData();
+        
+        // 1. Loop and Append ALL files (Key must match 'files' in backend)
+        for (let i = 0; i < files.length; i++) {
+            formData.append('files', files[i]);
+        }
+        
+        // 2. Append Text Data
+        formData.append('courseCode', code);
+        formData.append('courseTitle', title);
+        formData.append('level', level);
+        formData.append('year', year);
+        formData.append('semester', semester);
+        formData.append('departments', selectedDepts.join(','));
+
+        // 3. Metadata (Base type on first file)
+        const type = files[0].type.includes('pdf') ? 'pdf' : 'image';
+        formData.append('type', type);
+
+        // 4. Sections
+        if (activeSections.length > 0) {
+            formData.append('sections', JSON.stringify(activeSections));
+        }
+
+        // G. Send to Backend
         const response = await fetch(API_URL, {
             method: 'POST',
-            headers: { 
-                'Content-Type': 'application/json',
-                'Authorization': token 
-            },
-            body: JSON.stringify(payload)
+            headers: { 'Authorization': token },
+            body: formData
         });
 
         const result = await response.json();
 
         if (response.ok) {
-            showNotification(`Success! ${code} broadcasted to ${selectedDepts.length} departments.`, "success");
+            showNotification(`Success! ${files.length} pages uploaded.`, "success");
             closeAdminPanel();
 
             if (typeof window.loadPapersFromBackend === 'function') {
